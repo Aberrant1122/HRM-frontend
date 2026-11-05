@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCalendarDate } from "@/lib/calendar-date";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Edit, Save, X, Loader2, Key, User, Trash2, Shield, Eye, EyeOff, Paperclip, Download, Upload } from "lucide-react";
@@ -419,11 +421,11 @@ export default function EmployeeDetailsPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Not provided";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return formatCalendarDate(dateString, {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
+    }, "en-US");
   };
 
   if (loading) {

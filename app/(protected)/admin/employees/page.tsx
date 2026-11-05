@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCalendarDate } from "@/lib/calendar-date";
+
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -345,11 +347,7 @@ export default function AdminEmployeesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {(employee.userInfo as UserInfo)?.startDate
-                          ? new Date(
-                            (employee.userInfo as UserInfo).startDate!
-                          ).toLocaleDateString()
-                          : "N/A"}
+                        {formatCalendarDate((employee.userInfo as UserInfo)?.startDate)}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

@@ -139,13 +139,13 @@ export default function AdminEmployeesPage() {
       setIsDeleting(true);
       await deleteEmployee(employeeToDelete.id);
 
-      // Remove employee from local state
-      setEmployees(employees.filter(emp => emp.id !== employeeToDelete.id));
+      // Keep the employee visible with the updated account status
+      setEmployees(employees.map(emp => emp.id === employeeToDelete.id ? { ...emp, status: "inactive" } : emp));
 
-      toast.success("Employee deleted successfully");
+      toast.success("Employee deactivated successfully");
       setEmployeeToDelete(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete employee";
+      const message = error instanceof Error ? error.message : "Failed to deactivate employee";
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -377,7 +377,7 @@ export default function AdminEmployeesPage() {
                               onClick={() => setEmployeeToDelete(employee)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Employee
+                              Deactivate Employee
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -431,22 +431,12 @@ export default function AdminEmployeesPage() {
       <Dialog open={!!employeeToDelete} onOpenChange={() => setEmployeeToDelete(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Employee</DialogTitle>
+            <DialogTitle>Deactivate Employee</DialogTitle>
             <DialogDescription className="space-y-3">
               <p>
-                Are you sure you want to delete <strong>{employeeToDelete?.fullName}</strong>?
+                Are you sure you want to deactivate <strong>{employeeToDelete?.fullName}</strong>?
               </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                <p className="font-semibold mb-1">⚠️ Warning:</p>
-                <p>This action cannot be undone and will permanently:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Remove the employee from the system</li>
-                  <li>Delete all their personal information</li>
-                  <li>Delete all projects they manage (if any)</li>
-                  <li>Delete all tasks in those projects</li>
-                  <li>Remove all their attendance records</li>
-                </ul>
-              </div>
+              <p>This disables account access and preserves employee records, payroll history, projects and tasks.</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-6">
@@ -465,10 +455,10 @@ export default function AdminEmployeesPage() {
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  Deactivating...
                 </>
               ) : (
-                "Delete Employee"
+                "Deactivate Employee"
               )}
             </Button>
           </div>

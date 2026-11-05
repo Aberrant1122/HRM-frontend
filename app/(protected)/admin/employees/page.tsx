@@ -431,10 +431,10 @@ export default function AdminEmployeesPage() {
           <DialogHeader>
             <DialogTitle>Deactivate Employee</DialogTitle>
             <DialogDescription className="space-y-3">
-              <p>
+              <span className="block">
                 Are you sure you want to deactivate <strong>{employeeToDelete?.fullName}</strong>?
-              </p>
-              <p>This disables account access and preserves employee records, payroll history, projects and tasks.</p>
+              </span>
+              <span className="block">This disables account access and preserves employee records, payroll history, projects and tasks.</span>
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 mt-6">

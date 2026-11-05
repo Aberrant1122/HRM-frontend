@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useAuth } from '@/context/AuthContext';
+import { getSocketEndpoint } from '@/lib/socket-endpoint';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -28,28 +30,20 @@ interface SocketProviderProps {
 }
 
 export function SocketProvider({ children }: SocketProviderProps) {
+  const { user, token } = useAuth();
+  const userId = user?.id;
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Get user info from localStorage
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    
-    if (!token || !userStr) {
-      return;
-    }
-
-    let user;
-    try {
-      user = JSON.parse(userStr);
-    } catch (e) {
-      console.error('Failed to parse user from localStorage');
+    if (!token || !userId) {
+      setSocket(null);
+      setIsConnected(false);
       return;
     }
 
     // Initialize Socket.IO connection
-    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001', {
+    const socketInstance = io(getSocketEndpoint(), {
       auth: {
         token,
       },
@@ -61,8 +55,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
       setIsConnected(true);
       
       // Join user room for notifications
-      if (user?.id) {
-        socketInstance.emit('join', user.id);
+      if (userId) {
+        socketInstance.emit('join', userId);
       }
     });
 
@@ -82,7 +76,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     return () => {
       socketInstance.disconnect();
     };
-  }, []);
+  }, [userId, token]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

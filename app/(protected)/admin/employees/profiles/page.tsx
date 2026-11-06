@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Search, Eye, Edit, MoreHorizontal, Loader2, User, Key } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
 import { getAllEmployees } from "@/lib/actions/employee.actions";
 import { useRouter } from "next/navigation";
 
@@ -28,9 +27,10 @@ import {
 import { Header } from "@/components/header";
 
 import { Employee } from "@/lib/types/employee.types";
+import { formatCalendarDate } from "@/lib/calendar-date";
 
 // Define the valid status types
-type EmployeeStatus = "active" | "inactive" | "suspended" | "on_leave";
+type EmployeeStatus = "active" | "inactive" | "suspended" | "unknown";
 
 // Extend the Employee type to include the status type
 interface EmployeeWithStatus extends Omit<Employee, "status"> {
@@ -43,73 +43,55 @@ const normalizeStatus = (status: string): EmployeeStatus => {
     case "active":
     case "inactive":
     case "suspended":
-    case "on_leave":
       return status;
     default:
-      return "inactive";
+      return "unknown";
   }
 };
 
 export default function EmployeeProfilesPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    let cancelled = false;
     const fetchEmployees = async () => {
       try {
         setIsLoading(true);
-        const response = await getAllEmployees();
+        setError(null);
+        const response = await getAllEmployees(currentPage, 12, { search });
+        if (cancelled) return;
         if (response.success) {
           const normalizedEmployees = response.data.map((emp) => ({
             ...emp,
             status: normalizeStatus(emp.status),
           }));
           setEmployees(normalizedEmployees);
+          setTotalPages(response.pagination?.totalPages ?? 0);
+          setTotalItems(response.pagination?.totalItems ?? 0);
         } else {
           throw new Error("Failed to fetch employees");
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("Error fetching employees:", err);
         setError("Failed to load employee profiles. Please try again later.");
-        toast.error("Failed to load employee profiles");
+        setEmployees([]);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     fetchEmployees();
-  }, []);
-
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (employee.userInfo?.department || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (employee.userInfo?.position || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading employee profiles...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
-      </div>
-    );
-  }
+    return () => { cancelled = true; };
+  }, [currentPage, search, refreshVersion]);
 
   return (
     <>
@@ -126,7 +108,7 @@ export default function EmployeeProfilesPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Employee Profiles</h1>
             <p className="text-muted-foreground">
-              View and manage detailed employee profiles and information
+              View profiles for employee-role accounts across all pages
             </p>
           </div>
           <div className="flex gap-2">
@@ -150,24 +132,30 @@ export default function EmployeeProfilesPage() {
           <CardHeader>
             <CardTitle>Search Employees</CardTitle>
             <CardDescription>
-              Find employees by name, email, department, or position
+              Search all employee-role accounts by name, email, department, or position
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2">
+            <form className="flex flex-wrap items-center gap-2" onSubmit={event => {
+              event.preventDefault(); setCurrentPage(1); setSearch(searchTerm.trim()); setRefreshVersion(value => value + 1);
+            }}>
               <Search className="h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search by name, email, department, or position..."
+                aria-label="Search all profiles"
+                maxLength={100}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-md"
               />
-            </div>
+              <Button type="submit">Search profiles</Button>
+              <Button type="button" variant="outline" onClick={() => { setSearchTerm(""); setSearch(""); setCurrentPage(1); }}>Clear search</Button>
+            </form>
           </CardContent>
         </Card>
         {/* Employee Profiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((employee) => (
+          {!isLoading && !error && employees.map((employee) => (
             <Card key={employee.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-4">
@@ -197,7 +185,7 @@ export default function EmployeeProfilesPage() {
                       variant={
                         employee.status === "active"
                           ? "default"
-                          : employee.status === "on_leave"
+                          : employee.status === "unknown"
                             ? "secondary"
                             : "destructive"
                       }
@@ -279,26 +267,18 @@ export default function EmployeeProfilesPage() {
                     <div>
                       <p className="text-muted-foreground">Join Date</p>
                       <p className="font-medium">
-                        {employee.userInfo?.startDate
-                          ? new Date(employee.userInfo.startDate).toLocaleDateString()
-                          : "N/A"}
+                        {formatCalendarDate(employee.userInfo?.startDate)}
                       </p>
                     </div>
                   </div>
 
-                  {employee.userInfo?.phone && (
+                  {employee.userInfo?.contactNumber && (
                     <div className="text-sm">
                       <p className="text-muted-foreground">Contact</p>
-                      <p className="font-medium">{employee.userInfo.phone}</p>
+                      <p className="font-medium">{employee.userInfo.contactNumber}</p>
                     </div>
                   )}
 
-                  {employee.userInfo?.department && (
-                    <div className="text-sm">
-                      <p className="text-muted-foreground">Department</p>
-                      <p className="font-medium">{employee.userInfo.department}</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-2 mt-4">
@@ -324,17 +304,24 @@ export default function EmployeeProfilesPage() {
             </Card>
           ))}
         </div>
-        {filteredEmployees.length === 0 && !isLoading && (
+        <p className="text-sm text-muted-foreground" aria-live="polite">{isLoading ? "Loading profiles…" : error ? "Profiles unavailable" : `${totalItems} matching accounts`}{search ? ` · Search: ${search}` : ""}</p>
+        {error && <div role="alert" className="text-red-600">{error} <Button variant="outline" onClick={() => setRefreshVersion(value => value + 1)}>Retry profiles</Button></div>}
+        {!isLoading && !error && totalPages > 1 && <div className="flex items-center justify-between gap-3">
+          <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(value => value - 1)}>Previous profiles</Button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <Button variant="outline" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(value => value + 1)}>Next profiles</Button>
+        </div>}
+        {employees.length === 0 && !isLoading && !error && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <User className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No employees found</h3>
               <p className="text-muted-foreground text-center mb-4">
-                {searchTerm
+                {search
                   ? "No employees match your search criteria. Try adjusting your search terms."
                   : "No employees have been added to the system yet."}
               </p>
-              {!searchTerm && (
+              {!search && (
                 <Button asChild>
                   <Link href="/admin/employees/add">
                     Add First Employee

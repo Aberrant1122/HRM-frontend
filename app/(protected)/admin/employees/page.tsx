@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { getAllEmployees, deleteEmployee } from "@/lib/actions/employee.actions";
+import { getAllEmployees, deleteEmployee, getEmployeeAccountSummary } from "@/lib/actions/employee.actions";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -57,10 +57,10 @@ import {
 import { Header } from "@/components/header";
 import { AddEmployeeForm } from "@/components/add-employee-form";
 
-import { Employee, UserInfo } from "@/lib/types/employee.types";
+import { Employee, UserInfo, EmployeeAccountSummary } from "@/lib/types/employee.types";
 
 // Define the valid status types
-type EmployeeStatus = "active" | "inactive" | "suspended" | "on_leave";
+type EmployeeStatus = "active" | "inactive" | "suspended" | "unknown";
 
 // Extend the Employee type to include the status type
 interface EmployeeWithStatus extends Omit<Employee, "status"> {
@@ -73,16 +73,18 @@ const normalizeStatus = (status: string): EmployeeStatus => {
     case "active":
     case "inactive":
     case "suspended":
-    case "on_leave":
       return status;
     default:
-      return "inactive";
+      return "unknown";
   }
 };
 
 export default function AdminEmployeesPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState({ search: "", status: "" });
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,12 +95,22 @@ export default function AdminEmployeesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const limit = 10;
+  const [accountSummary, setAccountSummary] = useState<EmployeeAccountSummary | null>(null);
+  const [summaryError, setSummaryError] = useState(false);
+  const refreshAccountSummary = async () => {
+    try { setAccountSummary(await getEmployeeAccountSummary()); setSummaryError(false); }
+    catch { setAccountSummary(null); setSummaryError(true); }
+  };
+  useEffect(() => { refreshAccountSummary(); }, []);
 
-  const fetchEmployees = async (page: number) => {
+  useEffect(() => {
+    let cancelled = false;
+    const fetchEmployees = async (page: number) => {
     try {
       setIsLoading(true);
-      const response = await getAllEmployees(page, limit);
-      console.log(response, "response");
+      setError(null);
+      const response = await getAllEmployees(page, limit, filters);
+      if (cancelled) return;
       if (response.success) {
         const normalizedEmployees = response.data.map((emp) => ({
           ...emp,
@@ -106,6 +118,10 @@ export default function AdminEmployeesPage() {
         }));
         setEmployees(normalizedEmployees);
         if (response.pagination) {
+          if (page > Math.max(1, response.pagination.totalPages)) {
+            setCurrentPage(Math.max(1, response.pagination.totalPages));
+            return;
+          }
           setTotalPages(response.pagination.totalPages);
           setTotalItems(response.pagination.totalItems);
         }
@@ -113,26 +129,18 @@ export default function AdminEmployeesPage() {
         throw new Error("Failed to fetch employees");
       }
     } catch (err) {
+      if (cancelled) return;
       console.error("Error fetching employees:", err);
       setError("Failed to load employees. Please try again later.");
-      toast.error("Failed to load employees");
+      setEmployees([]);
     } finally {
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     }
   };
 
-  useEffect(() => {
     fetchEmployees(currentPage);
-  }, [currentPage]);
-
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (employee.userInfo?.department || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+    return () => { cancelled = true; };
+  }, [currentPage, filters, refreshVersion]);
 
   const handleDeleteEmployee = async () => {
     if (!employeeToDelete) return;
@@ -141,9 +149,10 @@ export default function AdminEmployeesPage() {
       setIsDeleting(true);
       await deleteEmployee(employeeToDelete.id);
 
-      // Keep the employee visible with the updated account status
-      setEmployees(employees.map(emp => emp.id === employeeToDelete.id ? { ...emp, status: "inactive" } : emp));
+      // Reconcile the retained account against the current server-side filters/page.
+      setRefreshVersion(value => value + 1);
 
+      await refreshAccountSummary();
       toast.success("Employee deactivated successfully");
       setEmployeeToDelete(null);
     } catch (error) {
@@ -153,23 +162,6 @@ export default function AdminEmployeesPage() {
       setIsDeleting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading employees...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64 text-red-500">
-        {error}
-      </div>
-    );
-  }
 
   return (
     <>
@@ -185,55 +177,49 @@ export default function AdminEmployeesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total Employees
+                Employee-role accounts
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalItems}
+                {accountSummary?.counts.total ?? (summaryError ? "Unavailable" : "…")}
               </div>
-              <p className="text-xs text-muted-foreground">Employees in system</p>
+              <p className="text-xs text-muted-foreground">Login role: employee (all pages, unfiltered)</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Departments</CardTitle>
+              <CardTitle className="text-sm font-medium">Configured departments</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4</div>
+              <div className="text-2xl font-bold">{accountSummary?.departments.activeConfigurations ?? (summaryError ? "Unavailable" : "…")}</div>
               <p className="text-xs text-muted-foreground">
-                Engineering, Marketing, Sales, HR
+                Active department configurations
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Active Employees
+                Active accounts
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {employees.filter((emp) => emp.status === "active").length}
+                {accountSummary?.counts.active ?? (summaryError ? "Unavailable" : "…")}
               </div>
-              <p className="text-xs text-muted-foreground">Currently working</p>
+              <p className="text-xs text-muted-foreground">Access enabled (all pages)</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">On Leave</CardTitle>
+              <CardTitle className="text-sm font-medium">Inactive accounts</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {
-                  employees.filter(
-                    (employee) =>
-                      employee.status === "on_leave" ||
-                      employee.status === "inactive"
-                  ).length
-                }
+                {accountSummary?.counts.inactive ?? (summaryError ? "Unavailable" : "…")}
               </div>
-              <p className="text-xs text-muted-foreground">Temporary absence</p>
+              <p className="text-xs text-muted-foreground">Inactive status; suspended: {accountSummary?.counts.suspended ?? "…"}; unknown: {accountSummary?.counts.unknown ?? "…"}</p>
             </CardContent>
           </Card>
         </div>
@@ -259,15 +245,38 @@ export default function AdminEmployeesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2 mb-6">
+            <p className="text-sm text-muted-foreground mb-4">Directory: employee-role accounts. Cards above show global, unfiltered totals.</p>
+            <form className="flex flex-wrap items-end gap-3 mb-6" onSubmit={event => {
+              event.preventDefault(); setCurrentPage(1);
+              setFilters({ search: searchTerm.trim(), status: statusFilter });
+            }}>
               <Search className="h-4 w-4 text-gray-400" />
+              <label className="grid gap-1 text-sm" htmlFor="directory-search">Search all accounts
               <Input
-                placeholder="Search employees by name, email, or department..."
+                id="directory-search"
+                placeholder="Name, email, department, or position"
+                maxLength={100}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
+                className="w-80 max-w-full"
               />
-            </div>
+              </label>
+              <label className="grid gap-1 text-sm" htmlFor="directory-status">Account status
+                <select id="directory-status" className="h-9 rounded-md border bg-background px-3" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+                  <option value="">All account statuses</option>
+                  <option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option>
+                </select>
+              </label>
+              <Button type="submit">Search directory</Button>
+              <Button type="button" variant="outline" onClick={() => {
+                setSearchTerm(""); setStatusFilter(""); setCurrentPage(1); setFilters({ search: "", status: "" });
+              }}>Clear filters</Button>
+            </form>
+            <p className="text-sm text-muted-foreground mb-3" aria-live="polite">
+              {isLoading ? "Loading directory…" : error ? "Directory unavailable" : `${totalItems} matching accounts`}
+              {filters.search ? ` · Search: ${filters.search}` : ""}{filters.status ? ` · Account status: ${filters.status}` : ""}
+            </p>
+            {error && <div role="alert" className="mb-4 text-red-600">{error} <Button variant="outline" onClick={() => setRefreshVersion(value => value + 1)}>Retry directory</Button></div>}
 
             <div className="rounded-md border">
               <Table>
@@ -282,7 +291,8 @@ export default function AdminEmployeesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEmployees.map((employee) => (
+                  {!isLoading && !error && employees.length === 0 && <TableRow><TableCell colSpan={6}>No matching accounts. Change or clear the filters.</TableCell></TableRow>}
+                  {!isLoading && !error && employees.map((employee) => (
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-3">
@@ -338,7 +348,7 @@ export default function AdminEmployeesPage() {
                           variant={
                             employee.status === "active"
                               ? "default"
-                              : employee.status === "on_leave"
+                              : employee.status === "unknown"
                                 ? "secondary"
                                 : "destructive"
                           }
@@ -387,14 +397,14 @@ export default function AdminEmployeesPage() {
             </div>
 
             {/* Pagination Controls */}
-            {!searchTerm && totalPages > 1 && (
+            {!error && !isLoading && totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <p className="text-sm text-muted-foreground">
                   Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{" "}
                   <span className="font-medium">
                     {Math.min(currentPage * limit, totalItems)}
                   </span>{" "}
-                  of <span className="font-medium">{totalItems}</span> employees
+                  of <span className="font-medium">{totalItems}</span> matching accounts
                 </p>
                 <div className="flex items-center space-x-2">
                   <Button

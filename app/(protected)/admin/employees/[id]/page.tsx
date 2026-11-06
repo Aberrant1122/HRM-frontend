@@ -190,15 +190,15 @@ export default function EmployeeDetailsPage() {
         updateData.reportingManager = String(formData.reportingManager).trim();
       }
 
-      console.log('FormData before filtering:', formData);
-      console.log('Sending update data:', updateData);
-      console.log('Update data keys:', Object.keys(updateData));
-      console.log('Update data JSON:', JSON.stringify(updateData, null, 2));
+
+
+
+
 
       // Verify no undefined values are being sent
       Object.entries(updateData).forEach(([key, value]) => {
         if (value === undefined) {
-          console.warn(`WARNING: Field "${key}" has undefined value, removing it`);
+
           delete updateData[key];
         }
       });
@@ -218,7 +218,7 @@ export default function EmployeeDetailsPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update employee";
       toast.error(message);
-      console.error('Update error:', error);
+
     } finally {
       setSaving(false);
     }
@@ -384,7 +384,7 @@ export default function EmployeeDetailsPage() {
 
       toast.success("Download started");
     } catch (error) {
-      console.error('Error downloading attachment:', error);
+
       toast.error('Failed to download attachment');
     }
   };
@@ -397,7 +397,7 @@ export default function EmployeeDetailsPage() {
       const viewUrl = `${backendUrl}/employee/${employeeId}/view-attachment/${filename}?token=${token}`;
       window.open(viewUrl, '_blank');
     } catch (error) {
-      console.error('Error viewing attachment:', error);
+
       toast.error('Failed to view attachment');
     }
   };

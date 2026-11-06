@@ -44,7 +44,7 @@ export async function loginUserAction(
 
     return data as LoginResponse;
   } catch (error) {
-    console.error("Login error:", error);
+
     return {
       error: "Network Error",
       message: "An error occurred during login. Please try again later.",
@@ -103,7 +103,7 @@ export async function inviteEmployeeAction(
 
     return data as InviteEmployeeResponse;
   } catch (error) {
-    console.error("Invitation error:", error);
+
     return {
       error: "Network Error",
       message:
@@ -118,7 +118,7 @@ export async function setPasswordAction(
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   if (!backendUrl) {
-    console.error("Backend URL is not configured");
+
     return {
       error: "Configuration Error",
       message:
@@ -126,10 +126,9 @@ export async function setPasswordAction(
     };
   }
 
-  console.log("Initiating set password request...");
+
 
   try {
-    const startTime = Date.now();
     // Ensure proper URL construction with trailing slash handling
     const baseUrl = backendUrl.endsWith('/') ? backendUrl : `${backendUrl}/`;
     const response = await fetch(`${baseUrl}auth/set-password`, {
@@ -145,27 +144,14 @@ export async function setPasswordAction(
       cache: "no-store",
     });
 
-    const responseTime = Date.now() - startTime;
     const data = await response.json().catch(() => ({}));
 
-    console.log(
-      `Password set response [${response.status} in ${responseTime}ms]:`,
-      {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.ok ? "[SUCCESS]" : data,
-      }
-    );
+
 
     if (!response.ok) {
       const errorMessage =
         data.message || response.statusText || "Failed to update password";
-      console.error("Password update failed:", {
-        status: response.status,
-        error: data.error,
-        message: errorMessage,
-        validationErrors: data.errors,
-      });
+
 
       return {
         error: data.error || "Password Update Failed",
@@ -175,13 +161,10 @@ export async function setPasswordAction(
       };
     }
 
-    console.log("Password updated successfully");
+
     return data as SetPasswordResponse;
   } catch (error) {
-    console.error("Network/Request Error in setPasswordAction:", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+
 
     return {
       error: "Network Error",
@@ -223,7 +206,7 @@ export async function requestPasswordResetAction(
 
     return data as PasswordResetResponse;
   } catch (error) {
-    console.error("Password reset request error:", error);
+
     return {
       error: "Network Error",
       message: "An error occurred while requesting password reset. Please try again later.",

@@ -80,10 +80,7 @@ export function SetPasswordForm() {
     if (formData.newPassword !== formData.confirmPassword) {
       const errorMsg =
         "Passwords do not match. Please make sure both passwords are identical.";
-      console.error("Password mismatch:", {
-        newPassword: formData.newPassword,
-        confirmPassword: formData.confirmPassword,
-      });
+
       setError(errorMsg);
       toast.error(errorMsg);
       return;
@@ -92,7 +89,7 @@ export function SetPasswordForm() {
     if (!token) {
       const errorMsg =
         "Invalid or expired token. Please request a new password reset link.";
-      console.error("Missing token in set password form");
+
       setError(errorMsg);
       toast.error(errorMsg);
       return;
@@ -101,24 +98,21 @@ export function SetPasswordForm() {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to set new password...");
+
       const result = await setPasswordAction({
         token,
         newPassword: formData.newPassword,
         confirmPassword: formData.confirmPassword,
       });
 
-      console.log("Password set response:", result);
+
 
       if ("error" in result) {
         const errorMsg =
           result.message ||
           result.error ||
           "Failed to update password. Please try again.";
-        console.error("Password set error:", {
-          error: result.error,
-          message: result.message,
-        });
+
         throw new Error(errorMsg);
       }
 
@@ -127,11 +121,11 @@ export function SetPasswordForm() {
 
       // Redirect to login after successful password set
       setTimeout(() => {
-        console.log("Redirecting to login after successful password set");
+
         router.push("/login");
       }, 2000);
     } catch (err) {
-      console.error("Error in handleSubmit:", err);
+
       let errorMessage = "Failed to set password. Please try again.";
 
       if (err instanceof Error) {

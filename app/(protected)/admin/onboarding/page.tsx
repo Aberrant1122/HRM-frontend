@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getAllEmployees } from "@/lib/actions/employee.actions";
 import type { Employee } from "@/lib/types/employee.types";
+import { useAuth } from "@/context/AuthContext";
+import { getAuthToken } from "@/lib/auth/token";
 export default function OnboardingDirectory() {
+  const { user } = useAuth();
+  if (!user?.id || user.role !== 'admin') return <p className="p-4">Admin access required.</p>;
+  return <DirectorySearch key={String(user.id) + ':' + user.role} />;
+}
+function DirectorySearch() {
+  const token = getAuthToken(), alive = useRef(false), requestNumber = useRef(0);
   const [search, setSearch] = useState(""); const [rows, setRows] = useState<Employee[]>([]);
   const [state, setState] = useState("idle"); const [page, setPage] = useState(1); const [totalPages, setTotalPages] = useState(0);
   const [appliedSearch, setAppliedSearch] = useState("");
+  useEffect(() => {
+    alive.current = true; requestNumber.current++; setRows([]); setState('idle'); setPage(1); setTotalPages(0); setSearch(''); setAppliedSearch('');
+    return () => { alive.current = false; };
+  }, [token]);
   async function load(nextPage: number, query = appliedSearch) {
+    if (!alive.current) return;
+    const request = ++requestNumber.current, credential = getAuthToken();
+    const current = () => alive.current && request === requestNumber.current && credential === getAuthToken() && window.location.pathname.replace(/\/$/, '') === '/admin/onboarding';
     setState("loading"); setRows([]);
-    try { const result = await getAllEmployees(nextPage, 10, { search: query }); setRows(result.data); setTotalPages(result.pagination?.totalPages ?? 0); setPage(nextPage); setAppliedSearch(query); setState("ready"); }
-    catch { setState("error"); }
+    try { const result = await getAllEmployees(nextPage, 10, { search: query }); if (!current()) return; setRows(result.data); setTotalPages(result.pagination?.totalPages ?? 0); setPage(nextPage); setAppliedSearch(query); setState("ready"); }
+    catch { if (current()) setState("error"); }
   }
   return <><Header breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Onboarding" }]} />
     <div className="p-4 space-y-5"><h1 className="text-3xl font-bold">Manual onboarding</h1>

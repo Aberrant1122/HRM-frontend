@@ -9,10 +9,10 @@ export type ManualOnboarding = {
 };
 export type ManualCommand = { commandKey: string; action: string; expectedVersion: number; itemId?: number; title?: string; responsibleId?: number | null; dueDate?: string | null; reason?: string };
 export class OnboardingError extends Error { constructor(message: string, public status: number) { super(message); } }
-export async function onboardingRequest(employeeId: string, command?: ManualCommand, before?: number): Promise<{ data: ManualOnboarding; replayed?: boolean }> {
+export async function onboardingRequest(employeeId: string, command?: ManualCommand, before?: number, credential = getAuthToken()): Promise<{ data: ManualOnboarding; replayed?: boolean }> {
   const base = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5005/api").replace(/\/$/, "");
   const response = await fetch(`${base}/onboarding/employee/${encodeURIComponent(employeeId)}${command ? '/commands' : before ? `?before=${before}` : ''}`, {
-    method: command ? 'POST' : 'GET', headers: { Authorization: `Bearer ${getAuthToken()}`, 'Content-Type': 'application/json' },
+    method: command ? 'POST' : 'GET', headers: { Authorization: `Bearer ${credential}`, 'Content-Type': 'application/json' },
     cache: 'no-store', ...(command && { body: JSON.stringify(command) }),
   });
   const payload = await response.json();

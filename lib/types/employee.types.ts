@@ -7,10 +7,18 @@ export interface Attachment {
   uploadedAt: string;
 }
 
+export interface EmployeeAccountSummary {
+  scope: { role: "employee"; filters: "none"; pagination: "all-pages"; basis: "login-account-role" };
+  counts: { total: number; active: number; inactive: number; suspended: number; unknown: number };
+  departments: { activeConfigurations: number };
+  generatedAt: string;
+}
+
 export interface UserInfo {
   id: number;
   employeeId: number;
   phone?: string;
+  contactNumber?: string;
   address?: string;
   dob?: string;
   department?: string;

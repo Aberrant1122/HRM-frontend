@@ -1,3 +1,4 @@
+import type { EmployeeAccountSummary } from "@/lib/types/employee.types";
 import { getAuthToken } from "@/lib/auth/token";
 import {
   EmployeesResponse,
@@ -18,18 +19,22 @@ const getApiUrl = (endpoint: string) => {
   return `${baseUrl}${endpoint}`;
 };
 
-export const getAllEmployees = async (page: number = 1, limit: number = 10): Promise<EmployeesResponse> => {
+export const getAllEmployees = async (page: number = 1, limit: number = 10, filters: { search?: string; status?: string } = {}): Promise<EmployeesResponse> => {
   const token = getAuthToken();
   if (!token) {
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(getApiUrl(`employee/all?page=${page}&limit=${limit}`), {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filters.search) params.set('search', filters.search);
+  if (filters.status) params.set('status', filters.status);
+  const response = await fetch(getApiUrl(`employee/all?${params}`), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -620,4 +625,16 @@ export const updateEmployeeRole = async (
   }
 
   return response.json();
+};
+
+export const getEmployeeAccountSummary = async (): Promise<EmployeeAccountSummary> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("No authentication token found");
+  const response = await fetch(getApiUrl("employee/account-summary"), {
+    headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Account summary unavailable");
+  const result = await response.json();
+  if (!result.success || !result.data) throw new Error("Account summary unavailable");
+  return result.data;
 };

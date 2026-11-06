@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCalendarDate } from "@/lib/calendar-date";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Edit, Save, X, Loader2, Key, User, Trash2, Shield, Eye, EyeOff, Paperclip, Download, Upload } from "lucide-react";
@@ -188,15 +190,15 @@ export default function EmployeeDetailsPage() {
         updateData.reportingManager = String(formData.reportingManager).trim();
       }
 
-      console.log('FormData before filtering:', formData);
-      console.log('Sending update data:', updateData);
-      console.log('Update data keys:', Object.keys(updateData));
-      console.log('Update data JSON:', JSON.stringify(updateData, null, 2));
+
+
+
+
 
       // Verify no undefined values are being sent
       Object.entries(updateData).forEach(([key, value]) => {
         if (value === undefined) {
-          console.warn(`WARNING: Field "${key}" has undefined value, removing it`);
+
           delete updateData[key];
         }
       });
@@ -216,7 +218,7 @@ export default function EmployeeDetailsPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update employee";
       toast.error(message);
-      console.error('Update error:', error);
+
     } finally {
       setSaving(false);
     }
@@ -243,10 +245,10 @@ export default function EmployeeDetailsPage() {
     try {
       setIsDeleting(true);
       await deleteEmployee(employeeId);
-      toast.success("Employee deleted successfully");
+      toast.success("Employee deactivated successfully");
       router.push("/admin/employees");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete employee";
+      const message = error instanceof Error ? error.message : "Failed to deactivate employee";
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -382,7 +384,7 @@ export default function EmployeeDetailsPage() {
 
       toast.success("Download started");
     } catch (error) {
-      console.error('Error downloading attachment:', error);
+
       toast.error('Failed to download attachment');
     }
   };
@@ -395,7 +397,7 @@ export default function EmployeeDetailsPage() {
       const viewUrl = `${backendUrl}/employee/${employeeId}/view-attachment/${filename}?token=${token}`;
       window.open(viewUrl, '_blank');
     } catch (error) {
-      console.error('Error viewing attachment:', error);
+
       toast.error('Failed to view attachment');
     }
   };
@@ -419,11 +421,11 @@ export default function EmployeeDetailsPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Not provided";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return formatCalendarDate(dateString, {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
+    }, "en-US");
   };
 
   if (loading) {
@@ -512,7 +514,7 @@ export default function EmployeeDetailsPage() {
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Employee
+                  Deactivate Employee
                 </Button>
                 <Button
                   variant="outline"
@@ -861,22 +863,12 @@ export default function EmployeeDetailsPage() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Employee</DialogTitle>
+            <DialogTitle>Deactivate Employee</DialogTitle>
             <DialogDescription className="space-y-3">
-              <p>
-                Are you sure you want to delete <strong>{employee?.fullName}</strong>?
-              </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                <p className="font-semibold mb-1">⚠️ Warning:</p>
-                <p>This action cannot be undone and will permanently:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Remove the employee from the system</li>
-                  <li>Delete all their personal information</li>
-                  <li>Delete all projects they manage (if any)</li>
-                  <li>Delete all tasks in those projects</li>
-                  <li>Remove all their attendance records</li>
-                </ul>
-              </div>
+              <span className="block">
+                Are you sure you want to deactivate <strong>{employee?.fullName}</strong>?
+              </span>
+              <span className="block">This disables account access and preserves employee records, payroll history, projects and tasks.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -895,10 +887,10 @@ export default function EmployeeDetailsPage() {
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  Deactivating...
                 </>
               ) : (
-                "Delete Employee"
+                "Deactivate Employee"
               )}
             </Button>
           </DialogFooter>

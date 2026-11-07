@@ -1,4 +1,5 @@
 "use client";
+import {LeavePolicyProfile} from "@/components/leave-policy-profile";
 
 import { formatCalendarDate } from "@/lib/calendar-date";
 
@@ -592,7 +593,7 @@ export default function EmployeeProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    {employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={false}/>}</>
   );
 }
 import Image from "next/image";

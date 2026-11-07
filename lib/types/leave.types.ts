@@ -13,6 +13,7 @@ export interface LeaveType {
 
 export interface LeaveRequest {
     id: number;
+    version: number;
     userId: number;
     leaveTypeId: number;
     startDate: string;

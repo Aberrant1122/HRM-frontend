@@ -180,8 +180,6 @@ export const createPayrollProfile = async (data: {
 export const updatePayrollProfile = async (
     id: number,
     data: {
-        salary_type: string;
-        base_salary: number;
         standard_working_days?: number;
         standard_working_hours?: number;
         overtime_eligible?: boolean;

@@ -1037,6 +1037,6 @@ export default function EmployeeDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    <Link className="underline m-4" href={`/admin/employees/${employeeId}/performance`}>Performance evaluations and history</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/offboarding`}>Offboarding record and clearance checklist</Link>{employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={true}/>}</>
+    <Link className="underline m-4" href={`/admin/employees/${employeeId}/training`}>Training schedules and records</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/performance`}>Performance evaluations and history</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/offboarding`}>Offboarding record and clearance checklist</Link>{employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={true}/>}</>
   );
 }

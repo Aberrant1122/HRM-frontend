@@ -53,6 +53,7 @@ import { Button } from "@/components/ui/button";
 
 const data = {
   navMain: [
+    { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {
       title: "Dashboard",
       url: "/manager/dashboard",

@@ -67,6 +67,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const data = {
   navMain: [
+    { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {
       title: "Dashboard",
       url: "/admin/dashboard",

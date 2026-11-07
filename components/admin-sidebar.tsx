@@ -91,6 +91,7 @@ const data = {
           url: "/admin/employees/profiles",
           icon: IdCard,
         },
+        { title: "Onboarding", url: "/admin/onboarding", icon: ListChecks },
       ],
     },
     {

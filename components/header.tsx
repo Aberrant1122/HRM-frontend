@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import { CorrectionLink } from '@/components/attendance/CorrectionLink';
 
 interface PageHeaderProps {
   breadcrumbs: Array<{
@@ -59,6 +60,7 @@ export function Header({ breadcrumbs }: PageHeaderProps) {
         </Breadcrumb>
       </div>
       <div className="flex items-center gap-4">
+        <CorrectionLink />
         {user && (
           <span className="hidden md:inline text-sm text-muted-foreground">
             {user.email}

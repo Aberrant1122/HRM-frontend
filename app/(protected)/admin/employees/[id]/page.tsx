@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {LeavePolicyProfile} from "@/components/leave-policy-profile";
 
 import { formatCalendarDate } from "@/lib/calendar-date";
@@ -1036,6 +1037,6 @@ export default function EmployeeDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    {employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={true}/>}</>
+    <Link className="underline m-4" href={`/admin/employees/${employeeId}/offboarding`}>Offboarding record and clearance checklist</Link>{employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={true}/>}</>
   );
 }

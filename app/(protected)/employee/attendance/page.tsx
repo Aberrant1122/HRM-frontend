@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { parseISO } from "date-fns";
 import { toast } from "sonner";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, { SWRConfig, useSWRConfig } from "swr";
+import { useAuth } from '@/context/AuthContext';
 import { getAuthToken } from "@/lib/auth/token";
 import { handleAuthExpiration } from "@/lib/auth/handleAuthExpiration";
 import { Header } from "@/components/header";
@@ -24,6 +25,7 @@ import { SummaryCards } from "@/components/attendance/SummaryCards";
 import { AttendanceActionCard } from "@/components/attendance/AttendanceActionCard";
 import { FilterBar } from "@/components/attendance/FilterBar";
 import { CheckoutForm } from "@/components/attendance/CheckoutForm";
+import { AttendanceRetry } from '@/components/attendance/AttendanceRetry';
 
 const fetcher = async (url: string) => {
   const token = getAuthToken();
@@ -50,18 +52,11 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-type OptimisticAttendanceRecord = Omit<
-  BackendWeeklyRecord,
-  "id" | "overtime" | "totalHours" | "formattedHours" | "status"
-> & {
-  id: string | number;
-  status: "present" | "absent" | "half_day" | "holiday" | "weekend" | "leave";
-  formattedHours: string;
-  totalHours: string;
-  overtime: string;
-};
-
 export default function EmployeeAttendancePage() {
+  const { token } = useAuth();
+  return <SWRConfig key={token || 'signed-out'} value={{ provider: () => new Map() }}><EmployeeAttendanceContent /></SWRConfig>;
+}
+function EmployeeAttendanceContent() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceStatus, setAttendanceStatus] = useState<
     "not_checked_in" | "checked_in" | "checked_out"
@@ -82,8 +77,6 @@ export default function EmployeeAttendancePage() {
 
   const { mutate: globalMutate } = useSWRConfig();
 
-  const expectedHours = 8;
-  const overtimeHours = Math.max(0, workingHours - expectedHours);
 
   const {
     data: weeklyData,
@@ -223,37 +216,10 @@ export default function EmployeeAttendancePage() {
 
     if (!weeklyData) return;
 
-    const today = new Date();
-    const optimisticRecord: OptimisticAttendanceRecord = {
-      id: "temp-id",
-      date: today.toISOString().split("T")[0],
-      day: today.toLocaleDateString("en-US", { weekday: "long" }),
-      clockIn: today.toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      clockOut: null,
-      formattedHours: "0h 0m",
-      status: "present",
-      totalHours: "0",
-      overtime: "0",
-    };
-
-    const optimisticData = {
-      ...weeklyData,
-      data: [
-        optimisticRecord as unknown as BackendWeeklyRecord,
-        ...weeklyData.data
-          .filter((r) => r.id?.toString() !== "temp-id")
-          .slice(0, 6),
-      ],
-    };
-
     try {
       setIsActionInProgress(true);
 
-      await mutateWeeklyData(optimisticData, false);
+      // Render committed server facts; do not invent work hours during a save.
 
       const { data, error, status } = await clockInAction(token);
 
@@ -280,6 +246,7 @@ export default function EmployeeAttendancePage() {
         });
       }
     } catch (error) {
+      await mutateWeeklyData();
       const err = error as Error;
       console.error("Check-in error details:", {
         message: err.message,
@@ -324,33 +291,10 @@ export default function EmployeeAttendancePage() {
 
     if (!weeklyData) return;
 
-    const optimisticData = {
-      ...weeklyData,
-      data: weeklyData.data.map((record) => {
-        if (record.clockIn && !record.clockOut) {
-          const updatedRecord: OptimisticAttendanceRecord = {
-            ...record,
-            id: record.id || "temp-id",
-            clockOut: new Date().toLocaleTimeString("en-US", {
-              hour12: false,
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            status: "present",
-            formattedHours: "8h 0m",
-            totalHours: "8",
-            overtime: "0",
-          };
-          return updatedRecord as unknown as BackendWeeklyRecord;
-        }
-        return record;
-      }),
-    };
-
     try {
       setIsActionInProgress(true);
 
-      await mutateWeeklyData(optimisticData, false);
+      // Render committed server facts; do not invent work hours during a save.
 
       const { data, error } = await clockOutAction(token, checkoutData);
 
@@ -376,9 +320,10 @@ export default function EmployeeAttendancePage() {
 
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
+      await mutateWeeklyData();
       const err = error as Error;
       console.error("Check-out error:", err);
-      toast.error("Check-out failed", {
+      toast.error(err.message.includes('unconfirmed') ? 'Attendance confirmation pending' : "Check-out failed", {
         description: err.message || "Failed to check out. Please try again.",
       });
       throw error;
@@ -417,6 +362,7 @@ export default function EmployeeAttendancePage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <AttendanceRetry />
       <Header
         breadcrumbs={[
           { label: "Employee", href: "/employee" },
@@ -460,7 +406,6 @@ export default function EmployeeAttendancePage() {
           <SummaryCards
             workingHours={workingHours}
             checkInTime={checkInTime}
-            overtimeHours={overtimeHours}
           />
 
           {/* Attendance Action */}

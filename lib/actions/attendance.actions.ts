@@ -1,3 +1,4 @@
+import { attendanceCommand } from '../attendance-retry';
 import {
   AttendanceData,
   ClockInResponse,
@@ -34,146 +35,14 @@ const handleApiError = (
 ): { error: string; status?: number } => {
   const apiError = error as ApiError;
 
-  console.error("API Error:", {
-    message: apiError.message,
-    status: apiError.status,
-    response: apiError.response,
-    stack: apiError.stack,
-  });
-
   return {
     error: apiError.response?.message || apiError.message || defaultMessage,
     status: apiError.status,
   };
 };
 
-export async function clockInAction(token: string): Promise<{
-  data?: ClockInResponse;
-  error?: string;
-  status?: number;
-}> {
-  try {
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-
-    const response = await fetch(getApiUrl('attendance/clock-in'), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw {
-        status: response.status,
-        message: errorData.message || "Failed to clock in",
-        response: errorData,
-      };
-    }
-
-    const data = await response.json();
-    return { data };
-  } catch (error) {
-    const { error: errorMessage, status } = handleApiError(
-      error,
-      "Failed to clock in. Please try again."
-    );
-
-    // If unauthorized, clear auth data
-    if (status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    }
-
-    return { error: errorMessage, status };
-  }
-}
-
-export async function clockOutAction(
-  token: string | null,
-  checkoutData?: {
-    taskId?: number;
-    taskStatus?: "planning" | "in-progress" | "testing" | "blocked" | "completed";
-    workNote?: string;
-    deliverableLink?: string;
-    deliverables?: File[];
-  }
-): Promise<{
-  data?: ClockOutResponse;
-  error?: string;
-  status?: number;
-}> {
-  try {
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-
-    // If there are files, use FormData, otherwise use JSON
-    const files = checkoutData?.deliverables ?? [];
-    const hasFiles = files.length > 0;
-    const formData = new FormData();
-
-    if (hasFiles) {
-      if (!checkoutData) {
-        throw new Error("Missing checkout data for file upload");
-      }
-      if (typeof checkoutData.taskId === "number") {
-        formData.append("taskId", checkoutData.taskId.toString());
-      }
-      if (checkoutData.taskStatus) {
-        formData.append("taskStatus", checkoutData.taskStatus);
-      }
-      if (checkoutData.workNote) formData.append("workNote", checkoutData.workNote);
-      if (checkoutData.deliverableLink) formData.append("deliverableLink", checkoutData.deliverableLink);
-      files.forEach((file) => {
-        formData.append("deliverables", file);
-      });
-    }
-
-    const headers: HeadersInit = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    if (!hasFiles) {
-      headers["Content-Type"] = "application/json";
-    }
-    // Don't set Content-Type for FormData - browser will set it with boundary
-
-    const response = await fetch(getApiUrl('attendance/clock-out'), {
-      method: "POST",
-      headers,
-      body: hasFiles ? formData : JSON.stringify(checkoutData || {}),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw {
-        status: response.status,
-        message: errorData.message || "Failed to clock out",
-        response: errorData,
-      };
-    }
-
-    const data = await response.json();
-    return { data };
-  } catch (error) {
-    const { error: errorMessage, status } = handleApiError(
-      error,
-      "Failed to clock out. Please try again."
-    );
-
-    // If unauthorized, clear auth data
-    if (status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    }
-
-    return { error: errorMessage, status };
-  }
-}
+export async function clockInAction(token: string): Promise<{ data?: ClockInResponse; error?: string; status?: number }> { return attendanceCommand<ClockInResponse>(token, 'in'); }
+export async function clockOutAction(token: string | null, checkoutData?: { taskId?: number; taskStatus?: "planning" | "in-progress" | "testing" | "blocked" | "completed"; workNote?: string; deliverableLink?: string; deliverables?: File[] }): Promise<{ data?: ClockOutResponse; error?: string; status?: number }> { return token ? attendanceCommand(token, 'out', checkoutData) : { error: 'No authentication token found' }; }
 
 export async function getActiveTasksForCheckout(token?: string): Promise<{
   data?: { id: number; title: string; status: string; priority: string; project?: { id: number; name: string } }[];

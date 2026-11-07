@@ -5,7 +5,6 @@ import { Clock, Timer, LogIn, CalendarDays } from "lucide-react";
 interface SummaryCardsProps {
   workingHours: number;
   checkInTime: Date | null;
-  overtimeHours: number;
 }
 
 function KpiCard({
@@ -39,7 +38,7 @@ function KpiCard({
   );
 }
 
-export function SummaryCards({ workingHours, checkInTime, overtimeHours }: SummaryCardsProps) {
+export function SummaryCards({ workingHours, checkInTime }: SummaryCardsProps) {
   const formatCheckIn = (date: Date | null) => {
     if (!date) return "-";
     return date.toLocaleTimeString("en-US", {
@@ -49,7 +48,7 @@ export function SummaryCards({ workingHours, checkInTime, overtimeHours }: Summa
     });
   };
 
-  const breakTime = "0m";
+  const breakTime = "Unknown";
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -59,7 +58,7 @@ export function SummaryCards({ workingHours, checkInTime, overtimeHours }: Summa
         iconColor="text-indigo-600"
         value={`${workingHours.toFixed(1)}h`}
         label="Worked Today"
-        subtext={overtimeHours > 0 ? `Includes ${overtimeHours.toFixed(1)}h overtime` : "Regular hours"}
+        subtext="Elapsed clock time; no overtime classification"
       />
       <KpiCard
         icon={Timer}
@@ -81,9 +80,9 @@ export function SummaryCards({ workingHours, checkInTime, overtimeHours }: Summa
         icon={CalendarDays}
         iconBg="bg-blue-50"
         iconColor="text-blue-600"
-        value="8h"
+        value="Not configured"
         label="Expected Hours"
-        subtext="Full day"
+        subtext="Shift policy awaits review"
       />
     </div>
   );

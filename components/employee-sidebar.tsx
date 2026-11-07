@@ -62,6 +62,7 @@ const data = {
     avatar: "JS",
   },
   navMain: [
+    { title: "My policies and circulars", url: "/policies", icon: FileText },
     { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {
       title: "Dashboard",

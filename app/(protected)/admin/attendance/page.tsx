@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Header } from "@/components/header";
 import Link from "next/link";
 import {
@@ -41,6 +41,11 @@ export default function AttendanceReportsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const requestSequence = useRef(0);
+  const scope = useRef({ token, selectedDate });
+  scope.current = { token, selectedDate };
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const fetchAttendance = useCallback(async () => {
     if (!token) {
       setError("No authentication token available");
@@ -48,9 +53,13 @@ export default function AttendanceReportsPage() {
       return;
     }
 
+    const sequence = ++requestSequence.current;
+    const current = () => mounted.current && sequence === requestSequence.current && scope.current.token === token && scope.current.selectedDate === selectedDate;
     try {
+      setData(null);
       setIsLoading(true);
       const result = await getAllAttendance(token, selectedDate);
+      if (!current()) return;
       if (result.error) {
         setError(result.error);
       } else {
@@ -58,10 +67,9 @@ export default function AttendanceReportsPage() {
         setError(null);
       }
     } catch (err) {
-      setError("Failed to fetch attendance data");
+      if (current()) setError("Failed to fetch attendance data");
     } finally {
-      setIsLoading(false);
-      setLastRefresh(new Date());
+      if (current()) { setIsLoading(false); setLastRefresh(new Date()); }
     }
   }, [token, selectedDate]);
 
@@ -103,7 +111,7 @@ export default function AttendanceReportsPage() {
   // Calculate statistics
   const totalEmployees = data?.data?.length || 0;
   const presentEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'present').length || 0;
-  const lateEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'late').length || 0;
+  const lateEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'conflict').length || 0;
   const absentEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'absent').length || 0;
   const attendanceRate = totalEmployees > 0 ? Math.round((presentEmployees / totalEmployees) * 100) : 0;
 
@@ -161,12 +169,12 @@ export default function AttendanceReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">Total Employees</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-700">Employee Accounts</CardTitle>
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-900">{totalEmployees}</div>
-              <p className="text-xs text-blue-600">Active workforce</p>
+              <p className="text-xs text-blue-600">Employee-role accounts</p>
             </CardContent>
           </Card>
 
@@ -183,7 +191,7 @@ export default function AttendanceReportsPage() {
 
           <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-yellow-700">Late Arrivals</CardTitle>
+              <CardTitle className="text-sm font-medium text-yellow-700">Conflicting Records</CardTitle>
               <TrendingUp className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
@@ -234,7 +242,12 @@ export default function AttendanceReportsPage() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
+                  <SelectItem value="conflict">Conflicting records</SelectItem>
+                  <SelectItem value="missing">No record</SelectItem>
+                  <SelectItem value="leave">Recorded leave</SelectItem>
+                  <SelectItem value="on-leave">Recorded on-leave</SelectItem>
+                  <SelectItem value="half-day">Recorded half-day</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
                   <SelectItem value="absent">Absent</SelectItem>
                   <SelectItem value="early_leave">Early Leave</SelectItem>
                 </SelectContent>
@@ -323,13 +336,13 @@ export default function AttendanceReportsPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {new Date(rec.date).toLocaleDateString("en-US", {
+                              {new Date(rec.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC",
                                 month: "short",
                                 day: "numeric",
                               })}
                             </span>
                             <span className="text-sm text-gray-500">
-                              {new Date(rec.date).toLocaleDateString("en-US", {
+                              {new Date(rec.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC",
                                 weekday: "short",
                               })}
                             </span>
@@ -345,7 +358,7 @@ export default function AttendanceReportsPage() {
                             {formatTime(rec.clockOut)}
                           </span>
                         </TableCell>
-                        <TableCell>{statusBadge(rec.status)}</TableCell>
+                        <TableCell>{statusBadge(rec.status)}{rec.status === "conflict" && <p>{rec.records?.map(r => r.status).join(", ")}</p>}</TableCell>
                         <TableCell>
                           <Link href={`/admin/daily-work-records?employeeId=${rec.userId}&date=${rec.date}`}>
                             <Button variant="ghost" size="sm" className="h-8 px-3">

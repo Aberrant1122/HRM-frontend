@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Settings, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import {restoreDepartment,type Department} from "@/lib/actions/department.actions";
 import { useDepartments } from "@/hooks/use-departments";
 
 interface DepartmentManagerProps {
@@ -46,6 +47,7 @@ export function DepartmentManager({
   } = useDepartments();
   
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const [archived,setArchived]=useState<Department|null>(null);
   const [newDepartment, setNewDepartment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,6 +57,7 @@ export function DepartmentManager({
       return;
     }
 
+    setArchived(null);
     setIsSubmitting(true);
     const result = await addDepartment(newDepartment);
     
@@ -62,11 +65,13 @@ export function DepartmentManager({
       setNewDepartment("");
       toast.success(result.message);
     } else {
+      if(result.archivedDepartment)setArchived(result.archivedDepartment);
       toast.error(result.message);
     }
     setIsSubmitting(false);
   };
 
+  const handleRestore=async()=>{if(!archived)return;setIsSubmitting(true);try{const result=await restoreDepartment(archived.id);if(result.success){await refreshDepartments();setArchived(null);setNewDepartment('');toast.success('Department restored');}else toast.error(result.error||'Restore failed');}finally{setIsSubmitting(false);}};
   const handleDeleteDepartment = async (departmentId: number) => {
     const departmentToDelete = departments.find((dept) => dept.id === departmentId);
     
@@ -156,7 +161,7 @@ export function DepartmentManager({
                 <Input
                   id="newDepartment"
                   value={newDepartment}
-                  onChange={(e) => setNewDepartment(e.target.value)}
+                  onChange={(e) => {setNewDepartment(e.target.value);setArchived(null);}}
                   onKeyPress={handleKeyPress}
                   placeholder="Enter department name"
                   disabled={isSubmitting || isLoading}
@@ -173,6 +178,7 @@ export function DepartmentManager({
               </div>
             </div>
 
+            {archived&&<section className="border p-3 space-y-2" aria-label="Archived department match"><p>{archived.name} is archived. Restore the existing department to make it available again.</p>{archived.description&&<p>{archived.description}</p>}<Button type="button" disabled={isSubmitting||isLoading} onClick={handleRestore}>Restore {archived.name}</Button></section>}
             {/* Refresh departments */}
             <div className="flex justify-between items-center">
               <div>

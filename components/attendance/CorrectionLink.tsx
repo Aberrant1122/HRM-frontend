@@ -1,0 +1,3 @@
+'use client';
+import {useEffect,useState} from 'react';import Link from 'next/link';import {useAuth} from '@/context/AuthContext';import {correctionFetch} from '@/lib/correction-api';
+export function CorrectionLink(){const {token}=useAuth(),[visible,setVisible]=useState(false);useEffect(()=>{let alive=true;setVisible(false);if(token)void correctionFetch<{canDraft:boolean;canApply:boolean}>(token,'correction-access').then(r=>{if(alive)setVisible(r.canDraft||r.canApply);}).catch(()=>{});return()=>{alive=false;};},[token]);return visible?<Link href="/attendance-corrections" className="text-sm underline">Attendance corrections</Link>:null;}

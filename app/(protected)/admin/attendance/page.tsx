@@ -36,6 +36,10 @@ export default function AttendanceReportsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [exporting, setExporting] = useState(false);
+  const exportScope = useRef({ token, exportMonth });
+  exportScope.current = { token, exportMonth };
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,9 +144,19 @@ export default function AttendanceReportsPage() {
     }
   };
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log("Exporting attendance data...");
+  const handleExport = async (format:'csv'|'xlsx') => {
+    if (!token || exporting) return;
+    setExporting(true);
+    const current = () => mounted.current && exportScope.current.token === token && exportScope.current.exportMonth === exportMonth;
+    try {
+      const base = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5005/api/').replace(/\/$/, '');
+      const response = await fetch(base + '/attendance/export?month=' + encodeURIComponent(exportMonth)+'&format='+format, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+      if (!response.ok) throw Error((await response.json()).message || 'Export unavailable');
+      const blob = await response.blob(); if (!current()) return;
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = `attendance-records-${exportMonth}.${format}`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { if (current()) setError(error instanceof Error ? error.message : 'Export unavailable'); }
+    finally { if (mounted.current) setExporting(false); }
   };
 
   const handleRefresh = () => {
@@ -268,9 +282,11 @@ export default function AttendanceReportsPage() {
                 Refresh
               </Button>
 
-              <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
+              <Input type="month" aria-label="Export month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} />
+              <Button onClick={()=>void handleExport('xlsx')} disabled={exporting || !exportMonth} variant="outline" className="w-full sm:w-auto">Export monthly raw records (Excel)</Button>
+              <Button onClick={()=>void handleExport('csv')} disabled={exporting || !exportMonth} variant="outline" className="w-full sm:w-auto">
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                Export monthly raw records (CSV)
               </Button>
             </div>
           </CardContent>

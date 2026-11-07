@@ -1,6 +1,6 @@
 import { getAuthToken } from "../auth/token";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5005/api";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5005/api").replace(/\/+$/, "");
 
 export interface Department {
   id: number;
@@ -16,6 +16,7 @@ interface ApiResponse<T> {
   data?: T;
   message?: string;
   error?: string;
+  archivedDepartment?: Department;
 }
 
 // Get all active departments
@@ -63,6 +64,7 @@ export async function createDepartment(
   data?: Department;
   error?: string;
   status?: number;
+  archivedDepartment?: Department;
 }> {
   try {
     const token = getAuthToken();
@@ -84,6 +86,7 @@ export async function createDepartment(
     if (!response.ok) {
       return {
         error: result.message || "Failed to create department",
+        archivedDepartment: result.archivedDepartment,
         status: response.status,
       };
     }

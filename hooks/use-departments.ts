@@ -21,7 +21,7 @@ export function useDepartments() {
   }, []);
 
   const loadDepartments = async () => {
-    setIsInitialLoading(true);
+
     try {
       const result = await getDepartments();
       if (result.data) {
@@ -39,7 +39,7 @@ export function useDepartments() {
     }
   };
 
-  const addDepartment = async (name: string, description?: string): Promise<{ success: boolean; message: string }> => {
+  const addDepartment = async (name: string, description?: string): Promise<{ success: boolean; message: string; archivedDepartment?: Department }> => {
     if (!name.trim()) {
       return { success: false, message: "Department name is required" };
     }
@@ -64,7 +64,7 @@ export function useDepartments() {
         const msg = result.status === 200 ? "Department restored successfully" : "Department added successfully";
         return { success: true, message: msg };
       } else {
-        return { success: false, message: result.error || "Failed to add department" };
+        return { success: false, message: result.error || "Failed to add department", archivedDepartment:result.archivedDepartment };
       }
     } catch (error) {
       console.error("Error adding department:", error);

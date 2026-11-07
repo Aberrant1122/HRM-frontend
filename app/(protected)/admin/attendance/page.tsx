@@ -176,7 +176,7 @@ export default function AttendanceReportsPage() {
         {/* Page Header */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-gray-900">Daily Attendance</h1>
-          <p className="text-gray-600">Monitor employee attendance and generate comprehensive reports</p>
+          <p className="text-gray-600">Review recorded attendance, missing records and conflicts.</p>
         </div>
 
         {/* Statistics Cards */}
@@ -187,19 +187,19 @@ export default function AttendanceReportsPage() {
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900">{totalEmployees}</div>
+              <div className="text-2xl font-bold text-blue-900">{data?totalEmployees:'—'}</div>
               <p className="text-xs text-blue-600">Employee-role accounts</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Present Today</CardTitle>
+              <CardTitle className="text-sm font-medium text-green-700">Recorded Present</CardTitle>
               <Clock className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-900">{presentEmployees}</div>
-              <p className="text-xs text-green-600">{attendanceRate}% attendance rate</p>
+              <div className="text-2xl font-bold text-green-900">{data?presentEmployees:'—'}</div>
+              <p className="text-xs text-green-600">{data?`${attendanceRate}% of listed accounts`:'Records unavailable'}</p>
             </CardContent>
           </Card>
 
@@ -209,19 +209,19 @@ export default function AttendanceReportsPage() {
               <TrendingUp className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-900">{lateEmployees}</div>
+              <div className="text-2xl font-bold text-yellow-900">{data?lateEmployees:'—'}</div>
               <p className="text-xs text-yellow-600">Need attention</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-red-700">Absent</CardTitle>
+              <CardTitle className="text-sm font-medium text-red-700">Recorded Absent</CardTitle>
               <Calendar className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-900">{absentEmployees}</div>
-              <p className="text-xs text-red-600">Follow up required</p>
+              <div className="text-2xl font-bold text-red-900">{data?absentEmployees:'—'}</div>
+              <p className="text-xs text-red-600">Explicitly recorded as absent</p>
             </CardContent>
           </Card>
         </div>

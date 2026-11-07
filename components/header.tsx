@@ -62,6 +62,7 @@ export function Header({ breadcrumbs }: PageHeaderProps) {
       <div className="flex items-center gap-4">
         <CorrectionLink />
         {user?.role === 'admin' && <a href="/admin/probation" className="text-sm underline">Probation</a>}
+        {user?.role === 'admin' && <a href="/admin/organization" className="text-sm underline">Organization</a>}
         {user && (
           <span className="hidden md:inline text-sm text-muted-foreground">
             {user.email}

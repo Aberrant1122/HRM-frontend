@@ -62,6 +62,7 @@ const data = {
     avatar: "JS",
   },
   navMain: [
+    { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {
       title: "Dashboard",
       url: "/employee/dashboard",

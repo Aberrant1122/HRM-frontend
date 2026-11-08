@@ -1,6 +1,6 @@
 import {getAuthToken} from './auth/token';
 const base=(process.env.NEXT_PUBLIC_BACKEND_URL||'http://localhost:5005/api/').replace(/\/$/,'');
-export type Task={id:number;title:string;description:string;assigneeId:number;departmentId:number|null;dueDate:string|null;status:string;version:number;assigneeName?:string};
+export type Task={id:number;title:string;description:string;assigneeId:number;departmentId:number|null;dueDate:string|null;status:string;version:number;submittedBy:number|null;submittedAt:string|null;approvedBy:number|null;approvedAt:string|null;assigneeName?:string};
 export type Detail={task:Task;assignee:{id:number;fullName:string;status:string};department:{id:number;name:string;isActive:boolean}|null;history:{id:number;version:number;action:string;createdAt:string;details:{actor:{fullName:string};reason:string;before:Task|null;after:Task;assignee?:{fullName:string};department?:{name:string}}}[];hasEarlierHistory:boolean};
 export type TaskPage={rows:Task[];hasMore:boolean;total:number;basis:string;asOf?:string};
 export type Saved={scope:string;body:Record<string,unknown>};
@@ -8,7 +8,7 @@ async function storage(scope:string,value?:Saved|null):Promise<Saved|undefined>{
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open('hrm-hrtask-command-recovery',1);r.onupgradeneeded=()=>r.result.createObjectStore('commands',{keyPath:'scope'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(Error('Retry storage unavailable'));});
   try{return await new Promise((resolve,reject)=>{const tx=db.transaction('commands',value===undefined?'readonly':'readwrite'),s=tx.objectStore('commands'),r=value===undefined?s.get(scope):value===null?s.delete(scope):s.add(value);let result:Saved|undefined;r.onsuccess=()=>{result=r.result as Saved|undefined;};tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(Error('Retry storage unavailable. No new change was sent.'));});}finally{db.close();}
 }
-function scope(token:string,id:string){if(!/^(commands)$/.test(id))throw Error('Invalid hrTask scope');return base+':'+JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).id+':'+id;}
+function scope(token:string,id:string){if(!/^(commands|mine\/commands|review\/commands|approval-permissions\/commands)$/.test(id))throw Error('Invalid hrTask scope');return base+':'+JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).id+':'+id;}
 export const pendingHrTask=(token:string,id:string)=>storage(scope(token,id));
 export async function hrTaskGet<T>(token:string,path:string):Promise<T>{const r=await fetch(base+'/hr-tasks/'+path,{headers:{Authorization:'Bearer '+token},cache:'no-store'}),data=await r.json();if(!r.ok)throw Error(data.message||'Organization unavailable');return data.data as T;}
 export async function hrTaskSave<T=Detail>(token:string,id:string,body?:Record<string,unknown>,retry=false):Promise<{data:T;replayed?:boolean;appliedVersion?:number}>{

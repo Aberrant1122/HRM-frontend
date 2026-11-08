@@ -62,6 +62,8 @@ const data = {
     avatar: "JS",
   },
   navMain: [
+    { title: "My HR tasks", url: "/hr-tasks", icon: FileText },
+    { title: "HR task approvals", url: "/hr-task-approvals", icon: FileText },
     { title: "My policies and circulars", url: "/policies", icon: FileText },
     { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {

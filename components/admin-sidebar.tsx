@@ -67,6 +67,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const data = {
   navMain: [
+    { title: "HR tasks and deadlines", url: "/admin/hr-tasks", icon: FileText },
     { title: "Consolidated record reports", url: "/admin/record-reports", icon: FileText },
     { title: "My policies and circulars", url: "/policies", icon: FileText },
     { title: "Policy publishing records", url: "/admin/policies", icon: FileText },

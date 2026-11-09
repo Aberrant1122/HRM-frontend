@@ -72,6 +72,7 @@ const data = {
     { title: "Task approval permission", url: "/admin/hr-task-permissions", icon: FileText },
     { title: "HR tasks and deadlines", url: "/admin/hr-tasks", icon: FileText },
     { title: "Consolidated record reports", url: "/admin/record-reports", icon: FileText },
+    { title: "Onboarding record report", url: "/admin/onboarding-record-report", icon: FileText },
     { title: "My HR tasks", url: "/hr-tasks", icon: FileText },
     { title: "HR task approvals", url: "/hr-task-approvals", icon: FileText },
     { title: "My policies and circulars", url: "/policies", icon: FileText },

@@ -188,7 +188,7 @@ export default function AttendanceReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-900">{data?totalEmployees:'—'}</div>
-              <p className="text-xs text-blue-600">Employee-role accounts</p>
+              <p className="text-xs text-blue-600">Includes preserved HR membership</p>
             </CardContent>
           </Card>
 

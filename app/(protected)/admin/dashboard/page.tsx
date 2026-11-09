@@ -51,7 +51,7 @@ export default function AdminDashboard() {
   }, [report]);
   const value = (count?: number) => count ?? (summaryState === "error" ? "Unavailable" : "…");
   const cards = [
-    ["Employee-role accounts", summary?.counts.total, "All account statuses; all pages"],
+    ["Employee accounts", summary?.counts.total, "All account statuses; all pages"],
     ["Active accounts", summary?.counts.active, "Account access enabled"],
     ["Inactive accounts", summary?.counts.inactive, `Suspended: ${summary?.counts.suspended ?? "…"}; unknown: ${summary?.counts.unknown ?? "…"}`],
     ["Configured departments", summary?.departments.activeConfigurations, "Active department configurations"],
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
     <Header breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Dashboard" }]} />
     <main className="flex flex-1 flex-col gap-6 p-4">
       <div><h1 className="text-3xl font-bold">Account overview</h1>
-        <p className="text-muted-foreground mt-2">Employee-role accounts across all pages and statuses. Account access state does not define employment or leave.</p></div>
+        <p className="text-muted-foreground mt-2">Employee logins and HR accounts with preserved employee membership, across all pages and statuses. Account access state does not define employment or leave.</p></div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map(([label, count, description]) => <Card key={label}>
           <CardHeader><CardTitle className="text-sm font-medium">{label}</CardTitle></CardHeader>
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
       {summaryState === "error" && <div role="alert">Account summary unavailable. <Button variant="outline" onClick={() => setReload(value => value + 1)}>Retry account summary</Button></div>}
       <Card>
         <CardHeader><CardTitle>Recorded activity by date</CardTitle>
-          <CardDescription>Choose a calendar date. These are records for employee-role accounts, including inactive and suspended accounts.</CardDescription></CardHeader>
+          <CardDescription>Choose a calendar date. These are records for employee accounts including preserved HR membership, inactive and suspended accounts.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           <form className="flex flex-wrap items-end gap-3" onSubmit={event => {
             event.preventDefault(); setReport(value => ({ date: dateInput, version: (value?.version ?? 0) + 1 }));

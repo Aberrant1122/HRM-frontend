@@ -74,6 +74,7 @@ const data = {
     { title: "First recorded joiners", url: "/admin/first-recorded-joiners", icon: FileText },
     { title: "Recorded birthday month", url: "/admin/recorded-birthdays", icon: FileText },
     { title: "Employment by current department", url: "/admin/department-workforce", icon: FileText },
+    { title: "Payroll record report", url: "/admin/payroll-record-report", icon: FileText },
     { title: "Population comparison", url: "/admin/population-review", icon: FileText },
     { title: "Task approval permission", url: "/admin/hr-task-permissions", icon: FileText },
     { title: "HR tasks and deadlines", url: "/admin/hr-tasks", icon: FileText },
@@ -407,5 +408,6 @@ export function AdminSidebar({
     </Sidebar>
   );
 }
+
 
 

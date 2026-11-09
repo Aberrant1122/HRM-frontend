@@ -69,6 +69,7 @@ const data = {
   navMain: [
     { title: "Designation categories", url: "/admin/designations", icon: FileText },
     { title: "HR letter drafts", url: "/admin/hr-letters", icon: FileText },
+    { title: "Employee document drafts", url: "/employee-documents", icon: FileText },
     { title: "Task approval permission", url: "/admin/hr-task-permissions", icon: FileText },
     { title: "HR tasks and deadlines", url: "/admin/hr-tasks", icon: FileText },
     { title: "Consolidated record reports", url: "/admin/record-reports", icon: FileText },

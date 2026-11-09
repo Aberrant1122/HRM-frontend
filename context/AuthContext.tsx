@@ -97,6 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (role === "admin") {
       router.push("/admin/dashboard");
+    } else if (role === "hr") {
+      router.push("/employee-documents");
     } else if (role === "manager") {
       router.push("/manager/dashboard");
     } else if (role === "client") {

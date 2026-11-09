@@ -177,14 +177,14 @@ export default function AdminEmployeesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Employee-role accounts
+                Employee accounts
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {accountSummary?.counts.total ?? (summaryError ? "Unavailable" : "…")}
               </div>
-              <p className="text-xs text-muted-foreground">Login role: employee (all pages, unfiltered)</p>
+              <p className="text-xs text-muted-foreground">Employee logins and preserved HR membership (all pages, unfiltered)</p>
             </CardContent>
           </Card>
           <Card>
@@ -245,7 +245,7 @@ export default function AdminEmployeesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">Directory: employee-role accounts. Cards above show global, unfiltered totals.</p>
+            <p className="text-sm text-muted-foreground mb-4">Directory: employee logins and preserved HR membership. Cards above show global, unfiltered totals.</p>
             <form className="flex flex-wrap items-end gap-3 mb-6" onSubmit={event => {
               event.preventDefault(); setCurrentPage(1);
               setFilters({ search: searchTerm.trim(), status: statusFilter });

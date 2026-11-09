@@ -8,7 +8,7 @@ export interface Attachment {
 }
 
 export interface EmployeeAccountSummary {
-  scope: { role: "employee"; filters: "none"; pagination: "all-pages"; basis: "login-account-role" };
+  scope: { role: "employee"; preservedHrMembership?: boolean; filters: "none"; pagination: "all-pages"; basis: string };
   counts: { total: number; active: number; inactive: number; suspended: number; unknown: number };
   departments: { activeConfigurations: number };
   generatedAt: string;

@@ -3,6 +3,7 @@ const base=(process.env.NEXT_PUBLIC_BACKEND_URL||'http://localhost:5005/api/').r
 export type Task={id:number;title:string;description:string;assigneeId:number;departmentId:number|null;dueDate:string|null;status:string;version:number;submittedBy:number|null;submittedAt:string|null;approvedBy:number|null;approvedAt:string|null;assigneeName?:string};
 export type Detail={task:Task;assignee:{id:number;fullName:string;status:string};department:{id:number;name:string;isActive:boolean}|null;history:{id:number;version:number;action:string;createdAt:string;details:{actor:{fullName:string};reason:string;before:Task|null;after:Task;assignee?:{fullName:string};department?:{name:string}}}[];hasEarlierHistory:boolean};
 export type TaskPage={rows:Task[];hasMore:boolean;total:number;basis:string;asOf?:string};
+export type TaskDecisionReceipt={taskId:number;appliedVersion:number;action:'approve';statusAtDecision:'completed'};
 export type Saved={scope:string;body:Record<string,unknown>};
 async function storage(scope:string,value?:Saved|null):Promise<Saved|undefined>{
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open('hrm-hrtask-command-recovery',1);r.onupgradeneeded=()=>r.result.createObjectStore('commands',{keyPath:'scope'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(Error('Retry storage unavailable'));});
@@ -11,7 +12,7 @@ async function storage(scope:string,value?:Saved|null):Promise<Saved|undefined>{
 function scope(token:string,id:string){if(!/^(commands|mine\/commands|review\/commands|approval-permissions\/commands)$/.test(id))throw Error('Invalid hrTask scope');return base+':'+JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).id+':'+id;}
 export const pendingHrTask=(token:string,id:string)=>storage(scope(token,id));
 export async function hrTaskGet<T>(token:string,path:string):Promise<T>{const r=await fetch(base+'/hr-tasks/'+path,{headers:{Authorization:'Bearer '+token},cache:'no-store'}),data=await r.json();if(!r.ok)throw Error(data.message||'Organization unavailable');return data.data as T;}
-export async function hrTaskSave<T=Detail>(token:string,id:string,body?:Record<string,unknown>,retry=false):Promise<{data:T;replayed?:boolean;appliedVersion?:number}>{
+export async function hrTaskSave<T=Detail>(token:string,id:string,body?:Record<string,unknown>,retry=false):Promise<{data:T;replayed?:boolean;appliedVersion?:number;receipt?:TaskDecisionReceipt}>{
   const key=scope(token,id),prior=await storage(key);if(prior&&!retry)throw Error('Retry the retained change first');if(!prior&&!body)throw Error('No retained change found');
   const saved=prior||{scope:key,body:{...body,commandKey:crypto.randomUUID()}};if(!prior)await storage(key,saved);
   for(let attempt=0;attempt<2;attempt++){

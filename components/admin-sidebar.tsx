@@ -76,6 +76,7 @@ const data = {
     { title: "Employment by current department", url: "/admin/department-workforce", icon: FileText },
     { title: "Payroll record report", url: "/admin/payroll-record-report", icon: FileText },
     { title: "Approved leave calendar", url: "/admin/approved-leave-calendar", icon: FileText },
+    { title: "Leave coverage", url: "/admin/leave-coverage-report", icon: FileText },
     { title: "Notice coverage", url: "/admin/notice-coverage-report", icon: FileText },
     { title: "Probation coverage", url: "/admin/probation-coverage-report", icon: FileText },
     { title: "Recorded headcount", url: "/admin/headcount-report", icon: FileText },

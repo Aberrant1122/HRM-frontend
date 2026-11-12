@@ -6,7 +6,7 @@ export default function AdminLeavePoliciesPage() {
             <div className="mb-10">
                 <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Leave Configuration</h1>
                 <p className="text-gray-500">
-                    Define leave types, quotas, and approval rules for your organization.
+                    Create and maintain live leave categories. Configure allowances in explicitly assigned employee policies.
                 </p>
             </div>
 

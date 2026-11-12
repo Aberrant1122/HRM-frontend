@@ -3,8 +3,9 @@ const base=(process.env.NEXT_PUBLIC_BACKEND_URL||'http://localhost:5005/api/').r
 export type Person={id:number;fullName:string;email:string;role:string;status:string};
 export type Department={id:number;name:string;isActive:boolean};
 export type Assignment={id:number;employeeId:number;departmentId:number|null;managerId:number|null;designation:string|null;designationId:number|null;version:number};
-export type Event={id:number;actorId:number;version:number;createdAt:string;details:{reason:string;before:Assignment|null;after:Assignment;actor:{id:number;fullName:string};manager:Person|null;department:Department|null}};
-export type Snapshot={employee:Person;legacy:{department:string|null;position:string|null;reportingManager:string|null}|null;assignment:Assignment|null;department:Department|null;designationCategory:{id:number;name:string;isActive:boolean;version:number}|null;people:Person[];history:Event[];hasEarlierHistory:boolean};
+export type Event={id:number;actorId:number;version:number;createdAt:string;details:{reason:string;targetEligibility?:TargetEligibility;before:Assignment|null;after:Assignment;actor:{id:number;fullName:string};manager:Person|null;department:Department|null}};
+export type TargetEligibility={allowed:boolean;basis:string;employmentAsOf:string|null;periods:{id:number;version:number;startDate:string;endDate:string|null}[];excludedInvalidMatchingRecords?:number};
+export type Snapshot={employee:Person;targetEligibility?:TargetEligibility;legacy:{department:string|null;position:string|null;reportingManager:string|null}|null;assignment:Assignment|null;department:Department|null;designationCategory:{id:number;name:string;isActive:boolean;version:number}|null;people:Person[];history:Event[];hasEarlierHistory:boolean};
 export type Saved={scope:string;body:Record<string,unknown>};
 async function storage(scope:string,value?:Saved|null):Promise<Saved|undefined>{
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open('hrm-organization-command-recovery',1);r.onupgradeneeded=()=>r.result.createObjectStore('commands',{keyPath:'scope'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(Error('Retry storage unavailable'));});

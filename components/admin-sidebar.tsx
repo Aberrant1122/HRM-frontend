@@ -67,6 +67,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const data = {
   navMain: [
+    { title: "Department categories", url: "/admin/departments", icon: FileText },
     { title: "Designation categories", url: "/admin/designations", icon: FileText },
     { title: "HR letter drafts", url: "/admin/hr-letters", icon: FileText },
     { title: "Employee document drafts", url: "/employee-documents", icon: FileText },

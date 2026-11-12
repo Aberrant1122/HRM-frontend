@@ -63,6 +63,7 @@ const data = {
   },
   navMain: [
     { title: "Employment records", url: "/employment-records", icon: FileText },
+    { title: "Leave balances", url: "/leave-balances", icon: FileText },
     { title: "My HR tasks", url: "/hr-tasks", icon: FileText },
     { title: "HR task approvals", url: "/hr-task-approvals", icon: FileText },
     { title: "My policies and circulars", url: "/policies", icon: FileText },

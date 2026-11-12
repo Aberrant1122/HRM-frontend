@@ -77,6 +77,7 @@ const data = {
     { title: "Payroll record report", url: "/admin/payroll-record-report", icon: FileText },
     { title: "Approved leave calendar", url: "/admin/approved-leave-calendar", icon: FileText },
     { title: "Leave category drafts", url: "/admin/leave-category-drafts", icon: FileText },
+    { title: "Leave balances", url: "/leave-balances", icon: FileText },
     { title: "Leave coverage", url: "/admin/leave-coverage-report", icon: FileText },
     { title: "Notice coverage", url: "/admin/notice-coverage-report", icon: FileText },
     { title: "Probation coverage", url: "/admin/probation-coverage-report", icon: FileText },

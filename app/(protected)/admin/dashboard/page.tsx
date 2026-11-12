@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getEmployeeAccountSummary } from "@/lib/actions/employee.actions";
 import { getAuthToken } from "@/lib/auth/token";
 import type { EmployeeAccountSummary } from "@/lib/types/employee.types";
+import { WorkforceOverview } from '@/components/workforce-overview';
 
 type AccountActivity = {
   date: string;
@@ -59,8 +60,10 @@ export default function AdminDashboard() {
   return <>
     <Header breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Dashboard" }]} />
     <main className="flex flex-1 flex-col gap-6 p-4">
-      <div><h1 className="text-3xl font-bold">Account overview</h1>
+      <div><h1 className="text-3xl font-bold">Workforce and account overview</h1>
         <p className="text-muted-foreground mt-2">Employee logins and HR accounts with preserved employee membership, across all pages and statuses. Account access state does not define employment or leave.</p></div>
+      <WorkforceOverview />
+      <h2 className="text-xl font-semibold">Account access overview</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map(([label, count, description]) => <Card key={label}>
           <CardHeader><CardTitle className="text-sm font-medium">{label}</CardTitle></CardHeader>

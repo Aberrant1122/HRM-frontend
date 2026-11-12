@@ -90,6 +90,7 @@ const data = {
     { title: "Onboarding record report", url: "/admin/onboarding-record-report", icon: FileText },
     { title: "Offboarding record report", url: "/admin/offboarding-record-report", icon: FileText },
     { title: "Leave request report", url: "/admin/leave-request-report", icon: FileText },
+    { title: "Leave utilization", url: "/admin/leave-utilization", icon: FileText },
     { title: "My HR tasks", url: "/hr-tasks", icon: FileText },
     { title: "HR task approvals", url: "/hr-task-approvals", icon: FileText },
     { title: "My policies and circulars", url: "/policies", icon: FileText },

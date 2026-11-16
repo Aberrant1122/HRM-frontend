@@ -12,6 +12,7 @@ import type { EmployeeAccountSummary } from "@/lib/types/employee.types";
 import { WorkforceOverview } from '@/components/workforce-overview';
 import { ProbationDashboardOverview } from '@/components/probation-dashboard-overview';
 import { LeaveRequestDashboardOverview } from '@/components/leave-request-dashboard-overview';
+import { PendingHrTaskDashboard } from '@/components/pending-hr-task-dashboard';
 
 type AccountActivity = {
   date: string;
@@ -67,6 +68,7 @@ export default function AdminDashboard() {
       <WorkforceOverview />
       <ProbationDashboardOverview />
       <LeaveRequestDashboardOverview />
+      <PendingHrTaskDashboard />
       <h2 className="text-xl font-semibold">Account access overview</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {cards.map(([label, count, description]) => <Card key={label}>

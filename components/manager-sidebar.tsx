@@ -53,6 +53,14 @@ import { Button } from "@/components/ui/button";
 
 const data = {
   navMain: [
+    { title: "My probation decision scopes", url: "/probation-decisions", icon: FileText },
+    { title: "My shared documents", url: "/my-documents", icon: FileText },
+    { title: "Employment records", url: "/employment-records", icon: FileText },
+    { title: "Leave balances", url: "/leave-balances", icon: FileText },
+    { title: "My HR tasks", url: "/hr-tasks", icon: FileText },
+    { title: "HR task approvals", url: "/hr-task-approvals", icon: FileText },
+    { title: "My policies and circulars", url: "/policies", icon: FileText },
+    { title: "My assigned evaluations", url: "/reviews", icon: FileText },
     {
       title: "Dashboard",
       url: "/manager/dashboard",

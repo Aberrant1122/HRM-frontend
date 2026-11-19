@@ -1,4 +1,7 @@
 "use client";
+import {LeavePolicyProfile} from "@/components/leave-policy-profile";
+
+import { formatCalendarDate } from "@/lib/calendar-date";
 
 import { Edit, Phone, Mail, MapPin, Calendar, Building, Loader2, Camera, Trash2, X } from "lucide-react";
 
@@ -338,11 +341,7 @@ export default function EmployeeProfilePage() {
                   <div>
                     <p className="text-sm font-medium">Join Date</p>
                     <p className="text-sm text-gray-600">
-                      {employee?.personalInfo?.startDate
-                        ? new Date(
-                          employee.personalInfo.startDate
-                        ).toLocaleDateString()
-                        : "N/A"}
+                      {formatCalendarDate(employee?.personalInfo?.startDate)}
                     </p>
                   </div>
                 </div>
@@ -427,11 +426,7 @@ export default function EmployeeProfilePage() {
                       Join Date
                     </p>
                     <p className="text-sm text-gray-600">
-                      {employee?.personalInfo?.startDate
-                        ? new Date(
-                          employee.personalInfo.startDate
-                        ).toLocaleDateString()
-                        : "N/A"}
+                      {formatCalendarDate(employee?.personalInfo?.startDate)}
                     </p>
                   </div>
                 </div>
@@ -598,7 +593,7 @@ export default function EmployeeProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    {employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={false}/>}</>
   );
 }
 import Image from "next/image";

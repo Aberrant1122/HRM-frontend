@@ -1,4 +1,5 @@
 "use client";
+import {payrollCurrencyTotals} from '@/lib/payroll-currency-totals';
 
 import { useState, useEffect } from "react";
 import {
@@ -110,7 +111,7 @@ export default function EmployeePayrollPage() {
                                     <p className="text-sm font-medium text-slate-400">Calculated Salary</p>
                                     <div className="flex items-baseline gap-2 flex-wrap">
                                         <span className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-                                            Rs {Math.floor(Number(lastPaid.net_salary)).toLocaleString()}
+                                            {lastPaid.currency || "Unclassified"} {Math.floor(Number(lastPaid.net_salary)).toLocaleString()}
                                         </span>
                                         <span className="text-lg sm:text-xl font-medium text-blue-400">PKR</span>
                                     </div>
@@ -119,7 +120,7 @@ export default function EmployeePayrollPage() {
                                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full lg:w-auto">
                                     <div className="flex flex-col items-center justify-center rounded-2xl bg-white/5 border border-white/10 p-3 sm:p-4 min-w-[100px] sm:min-w-[120px] backdrop-blur-sm relative group flex-1 sm:flex-none">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Gross Pay</span>
-                                        <span className="text-base sm:text-lg font-bold text-white">Rs {Number(lastPaid.gross_salary).toLocaleString()}</span>
+                                        <span className="text-base sm:text-lg font-bold text-white">{lastPaid.currency || "Unclassified"} {Number(lastPaid.gross_salary).toLocaleString()}</span>
                                         {Number(lastPaid.snapshot?.totalBonuses || 0) > 0 && (
                                             <Badge variant="outline" className="absolute -top-2 -right-2 bg-green-500 text-[8px] h-4 px-1 border-none text-white animate-pulse">
                                                 +{Number(lastPaid.snapshot?.totalBonuses).toLocaleString()}
@@ -128,7 +129,7 @@ export default function EmployeePayrollPage() {
                                     </div>
                                     <div className="flex flex-col items-center justify-center rounded-2xl bg-red-500/5 border border-red-500/10 p-3 sm:p-4 min-w-[100px] sm:min-w-[120px] backdrop-blur-sm text-red-400 relative flex-1 sm:flex-none">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-red-500/70">Deductions</span>
-                                        <span className="text-base sm:text-lg font-bold">Rs {Number(lastPaid.total_deductions).toLocaleString()}</span>
+                                        <span className="text-base sm:text-lg font-bold">{lastPaid.currency || "Unclassified"} {Number(lastPaid.total_deductions).toLocaleString()}</span>
                                         {Number(lastPaid.snapshot?.totalAdjustmentPenalties || 0) > 0 && (
                                             <Badge variant="outline" className="absolute -top-2 -right-2 bg-red-600 text-[8px] h-4 px-1 border-none text-white animate-pulse">
                                                 -{Number(lastPaid.snapshot?.totalAdjustmentPenalties).toLocaleString()}
@@ -153,14 +154,14 @@ export default function EmployeePayrollPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <PayrollStatsCard
                         title="Monthly Average"
-                        value={`Rs ${Math.floor(payrolls.reduce((sum, p) => sum + Number(p.net_salary), 0) / (payrolls.length || 1)).toLocaleString()}`}
+                        value={payrollCurrencyTotals(payrolls,'net_salary',true)}
                         description={`Based on the last ${payrolls.length} months`}
                         icon={TrendingUp}
                         iconColor="text-green-600"
                     />
                     <PayrollStatsCard
                         title="Total Deductions (YTD)"
-                        value={`Rs ${Math.floor(payrolls.reduce((sum, p) => sum + (Number(p.total_deductions) || 0), 0)).toLocaleString()}`}
+                        value={payrollCurrencyTotals(payrolls,'total_deductions')}
                         description="Taxes, penalties & leaves"
                         icon={TrendingDown}
                         iconColor="text-red-600"
@@ -220,7 +221,7 @@ export default function EmployeePayrollPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end gap-1">
-                                                        <span>Rs {Number(p.gross_salary).toFixed(0)}</span>
+                                                        <span>{p.currency || "Unclassified"} {Number(p.gross_salary).toFixed(0)}</span>
                                                         {Number(p.snapshot?.totalBonuses || 0) > 0 && (
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -237,7 +238,7 @@ export default function EmployeePayrollPage() {
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
                                                                         <div className="space-y-1">
-                                                                            <p className="font-bold">Bonuses: +Rs {Number(p.snapshot?.totalBonuses).toFixed(2)}</p>
+                                                                            <p className="font-bold">Bonuses: +{p.currency || "Unclassified"} {Number(p.snapshot?.totalBonuses).toFixed(2)}</p>
                                                                             {p.snapshot?.adjustments?.filter(a => a.type === 'bonus').map((a, i) => (
                                                                                 <p key={i} className="text-[10px] opacity-80">- {a.reason}</p>
                                                                             ))}
@@ -250,7 +251,7 @@ export default function EmployeePayrollPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right text-red-600">
                                                     <div className="flex items-center justify-end gap-1">
-                                                        <span>-Rs {Number(p.total_deductions).toFixed(0)}</span>
+                                                        <span>-{p.currency || "Unclassified"} {Number(p.total_deductions).toFixed(0)}</span>
                                                         {Number(p.snapshot?.totalAdjustmentPenalties || 0) > 0 && (
                                                             <TooltipProvider>
                                                                 <Tooltip>
@@ -267,7 +268,7 @@ export default function EmployeePayrollPage() {
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
                                                                         <div className="space-y-1">
-                                                                            <p className="font-bold">Penalties: -Rs {Number(p.snapshot?.totalAdjustmentPenalties).toFixed(2)}</p>
+                                                                            <p className="font-bold">Penalties: -{p.currency || "Unclassified"} {Number(p.snapshot?.totalAdjustmentPenalties).toFixed(2)}</p>
                                                                             {p.snapshot?.adjustments?.filter(a => a.type === 'penalty').map((a, i) => (
                                                                                 <p key={i} className="text-[10px] opacity-80">- {a.reason}</p>
                                                                             ))}
@@ -278,7 +279,7 @@ export default function EmployeePayrollPage() {
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-green-600">Rs {Math.floor(Number(p.net_salary)).toLocaleString()}</TableCell>
+                                                <TableCell className="text-right font-bold text-green-600">{p.currency || "Unclassified"} {Math.floor(Number(p.net_salary)).toLocaleString()}</TableCell>
                                                 <TableCell className="text-center">
                                                     <Button variant="outline" size="sm" onClick={(e) => {
                                                         e.stopPropagation();

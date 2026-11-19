@@ -125,7 +125,7 @@ export function PayrollBreakdownDialog({
                             <div className="flex justify-between items-center py-1.5">
                                 <span className="text-sm text-slate-600">Base Salary ({snapshot?.salaryType})</span>
                                 <span className="text-sm font-medium text-slate-900">
-                                    Rs {baseSalary.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {payroll.currency || "Unclassified"} {baseSalary.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
                             
@@ -133,7 +133,7 @@ export function PayrollBreakdownDialog({
                                 <div className="flex justify-between items-center py-1.5">
                                     <span className="text-sm text-slate-600">Overtime Pay</span>
                                     <span className="text-sm font-medium text-emerald-600">
-                                        +Rs {Number(snapshot?.overtimePay || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        +{payroll.currency || "Unclassified"} {Number(snapshot?.overtimePay || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -156,7 +156,7 @@ export function PayrollBreakdownDialog({
                                         </TooltipProvider>
                                     </div>
                                     <span className="text-sm font-medium text-emerald-600">
-                                        +Rs {Number(adj.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        +{payroll.currency || "Unclassified"} {Number(adj.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             ))}
@@ -165,7 +165,7 @@ export function PayrollBreakdownDialog({
                         <div className="flex justify-between items-center pt-3 border-t border-slate-100">
                             <span className="font-semibold text-slate-900">Gross Earnings</span>
                             <span className="font-semibold text-slate-900">
-                                Rs {Number(payroll.gross_salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {payroll.currency || "Unclassified"} {Number(payroll.gross_salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ export function PayrollBreakdownDialog({
                                         Unpaid Leave ({snapshot?.unpaidLeaveDays} days)
                                     </span>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {(Number(snapshot?.unpaidLeaveDays || 0) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {(Number(snapshot?.unpaidLeaveDays || 0) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -199,7 +199,7 @@ export function PayrollBreakdownDialog({
                                         Absent Days ({snapshot?.absentDays} days)
                                     </span>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {(Number(snapshot?.absentDays) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {(Number(snapshot?.absentDays) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -224,7 +224,7 @@ export function PayrollBreakdownDialog({
                                         </TooltipProvider>
                                     </div>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {(Number(snapshot?.unaccountedDays) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {(Number(snapshot?.unaccountedDays) * (baseSalary / standardDays)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -235,7 +235,7 @@ export function PayrollBreakdownDialog({
                                         Late Penalty ({snapshot?.lateCounts || 0} occurrences)
                                     </span>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {Number(snapshot?.latePenalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {Number(snapshot?.latePenalty || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -244,7 +244,7 @@ export function PayrollBreakdownDialog({
                                 <div className="flex justify-between items-center py-1.5">
                                     <span className="text-sm text-slate-600">Tax ({snapshot?.taxPercentage || 0}%)</span>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {Number(snapshot?.taxAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {Number(snapshot?.taxAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
@@ -267,7 +267,7 @@ export function PayrollBreakdownDialog({
                                         </TooltipProvider>
                                     </div>
                                     <span className="text-sm font-medium text-red-600">
-                                        -Rs {Math.abs(Number(adj.amount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        -{payroll.currency || "Unclassified"} {Math.abs(Number(adj.amount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             ))}
@@ -276,7 +276,7 @@ export function PayrollBreakdownDialog({
                         <div className="flex justify-between items-center pt-3 border-t border-slate-100">
                             <span className="font-semibold text-slate-900">Total Deductions</span>
                             <span className="font-semibold text-red-600">
-                                -Rs {Number(payroll.total_deductions).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                -{payroll.currency || "Unclassified"} {Number(payroll.total_deductions).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
                     </div>
@@ -295,7 +295,7 @@ export function PayrollBreakdownDialog({
                             </div>
                             <div className="text-right">
                                 <p className="text-2xl sm:text-3xl font-bold">
-                                    Rs {Number(payroll.net_salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {payroll.currency || "Unclassified"} {Number(payroll.net_salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                             </div>
                         </div>

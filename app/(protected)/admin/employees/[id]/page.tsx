@@ -1,4 +1,11 @@
 "use client";
+import Link from "next/link";
+import {EmployeeArchive} from "@/components/employee-archive";
+import {LeavePolicyProfile} from "@/components/leave-policy-profile";
+import {ProfileRecordSources} from '@/components/profile-record-sources';
+import {ProbationProfileSummary} from '@/components/probation-profile-summary';
+
+import { formatCalendarDate } from "@/lib/calendar-date";
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -188,15 +195,15 @@ export default function EmployeeDetailsPage() {
         updateData.reportingManager = String(formData.reportingManager).trim();
       }
 
-      console.log('FormData before filtering:', formData);
-      console.log('Sending update data:', updateData);
-      console.log('Update data keys:', Object.keys(updateData));
-      console.log('Update data JSON:', JSON.stringify(updateData, null, 2));
+
+
+
+
 
       // Verify no undefined values are being sent
       Object.entries(updateData).forEach(([key, value]) => {
         if (value === undefined) {
-          console.warn(`WARNING: Field "${key}" has undefined value, removing it`);
+
           delete updateData[key];
         }
       });
@@ -216,7 +223,7 @@ export default function EmployeeDetailsPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update employee";
       toast.error(message);
-      console.error('Update error:', error);
+
     } finally {
       setSaving(false);
     }
@@ -243,10 +250,10 @@ export default function EmployeeDetailsPage() {
     try {
       setIsDeleting(true);
       await deleteEmployee(employeeId);
-      toast.success("Employee deleted successfully");
+      toast.success("Employee deactivated successfully");
       router.push("/admin/employees");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete employee";
+      const message = error instanceof Error ? error.message : "Failed to deactivate employee";
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -316,36 +323,6 @@ export default function EmployeeDetailsPage() {
     setShowRoleDialog(true);
   };
 
-  const handleUploadAttachments = async () => {
-    if (newAttachments.length === 0) {
-      toast.error("Please select files to upload");
-      return;
-    }
-
-    try {
-      setUploadingAttachments(true);
-      const response = await uploadEmployeeAttachments(employeeId, newAttachments);
-
-      if (response && response.success) {
-        const uploadedAttachments = response.data.attachments;
-
-        // Filter out any invalid attachments
-        const validAttachments = Array.isArray(uploadedAttachments)
-          ? uploadedAttachments.filter(att => att && att.filename && att.originalName)
-          : [];
-
-        setAttachments(validAttachments);
-        setNewAttachments([]);
-        toast.success(`${response.data.newAttachments?.length || 0} attachment(s) uploaded successfully`);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to upload attachments";
-      toast.error(message);
-    } finally {
-      setUploadingAttachments(false);
-    }
-  };
-
   const handleRemoveAttachment = async (filename: string) => {
     if (!confirm("Are you sure you want to delete this attachment?")) {
       return;
@@ -382,7 +359,7 @@ export default function EmployeeDetailsPage() {
 
       toast.success("Download started");
     } catch (error) {
-      console.error('Error downloading attachment:', error);
+
       toast.error('Failed to download attachment');
     }
   };
@@ -395,7 +372,7 @@ export default function EmployeeDetailsPage() {
       const viewUrl = `${backendUrl}/employee/${employeeId}/view-attachment/${filename}?token=${token}`;
       window.open(viewUrl, '_blank');
     } catch (error) {
-      console.error('Error viewing attachment:', error);
+
       toast.error('Failed to view attachment');
     }
   };
@@ -419,11 +396,11 @@ export default function EmployeeDetailsPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Not provided";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return formatCalendarDate(dateString, {
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
+    }, "en-US");
   };
 
   if (loading) {
@@ -512,7 +489,7 @@ export default function EmployeeDetailsPage() {
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Employee
+                  Deactivate Employee
                 </Button>
                 <Button
                   variant="outline"
@@ -537,6 +514,7 @@ export default function EmployeeDetailsPage() {
           </div>
         </div>
 
+        <ProfileRecordSources employeeId={employeeId} loadedAccountId={employee.id}/>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Personal Information */}
           <Card>
@@ -657,9 +635,9 @@ export default function EmployeeDetailsPage() {
           {/* Work Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Work Information</CardTitle>
+              <CardTitle>Legacy work profile</CardTitle>
               <CardDescription>
-                Employment details and work-related information
+                Retained profile fields; the structured record sources are shown above.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -721,7 +699,7 @@ export default function EmployeeDetailsPage() {
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">
-                  Employee ID
+                  Login account ID
                 </Label>
                 <p className="text-sm font-medium">#{employee.id}</p>
               </div>
@@ -734,7 +712,7 @@ export default function EmployeeDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Paperclip className="h-5 w-5" />
-              Employee Attachments
+              Legacy profile attachments
             </CardTitle>
             <CardDescription>
               {isEditing
@@ -743,47 +721,8 @@ export default function EmployeeDetailsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Upload New Attachments - Only show in edit mode */}
-            {isEditing && (
-              <div className="space-y-3">
-                <Label htmlFor="newAttachments">Upload New Attachments</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="newAttachments"
-                    type="file"
-                    multiple
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        setNewAttachments(Array.from(e.target.files));
-                      }
-                    }}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.txt"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={handleUploadAttachments}
-                    disabled={uploadingAttachments || newAttachments.length === 0}
-                  >
-                    {uploadingAttachments ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {newAttachments.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {newAttachments.length} file(s) selected
-                  </p>
-                )}
-              </div>
-            )}
+            <p>Upload new PDF documents in private versioned storage. Earlier attachments remain below.</p>
+            <Link className="inline-block rounded border px-3 py-2 underline" href={'/employee-documents?employeeId='+employeeId}>Upload private PDF documents</Link>
 
             {/* Existing Attachments */}
             {attachments && attachments.length > 0 ? (
@@ -861,22 +800,12 @@ export default function EmployeeDetailsPage() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Employee</DialogTitle>
+            <DialogTitle>Deactivate Employee</DialogTitle>
             <DialogDescription className="space-y-3">
-              <p>
-                Are you sure you want to delete <strong>{employee?.fullName}</strong>?
-              </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                <p className="font-semibold mb-1">⚠️ Warning:</p>
-                <p>This action cannot be undone and will permanently:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Remove the employee from the system</li>
-                  <li>Delete all their personal information</li>
-                  <li>Delete all projects they manage (if any)</li>
-                  <li>Delete all tasks in those projects</li>
-                  <li>Remove all their attendance records</li>
-                </ul>
-              </div>
+              <span className="block">
+                Are you sure you want to deactivate <strong>{employee?.fullName}</strong>?
+              </span>
+              <span className="block">This disables account access and preserves employee records, payroll history, projects and tasks.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -895,10 +824,10 @@ export default function EmployeeDetailsPage() {
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  Deactivating...
                 </>
               ) : (
-                "Delete Employee"
+                "Deactivate Employee"
               )}
             </Button>
           </DialogFooter>
@@ -1043,6 +972,6 @@ export default function EmployeeDetailsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    {employeeId&&<ProbationProfileSummary key={'probation-'+employeeId} employeeId={String(employeeId)}/>}<Link className="underline m-4" href={`/admin/employees/${employeeId}/probation`}>Probation record and feedback</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/training`}>Training schedules and records</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/performance`}>Performance evaluations and history</Link><Link className="underline m-4" href={`/admin/employees/${employeeId}/offboarding`}>Offboarding record and clearance checklist</Link>{employeeId&&<EmployeeArchive key={"archive-"+employeeId} id={employeeId}/>} {employeeId&&<LeavePolicyProfile key={employeeId} employeeId={employeeId} admin={true}/>}</>
   );
 }

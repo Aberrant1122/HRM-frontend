@@ -246,6 +246,7 @@ export default function AddEmployeePage() {
               Enter employee information to add them to the system
             </p>
           </div>
+          <Button variant="outline" asChild><Link href="/admin/employees/import">Add employees in bulk</Link></Button>
           <Button variant="outline" asChild>
             <Link href="/admin/employees">
               <ArrowLeft className="mr-2 h-4 w-4" />

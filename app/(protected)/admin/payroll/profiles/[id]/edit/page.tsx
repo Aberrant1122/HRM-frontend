@@ -106,8 +106,6 @@ export default function EditPayrollProfilePage() {
                 : null;
 
             const res = await updatePayrollProfile(profileId, {
-                salary_type: formData.salary_type,
-                base_salary: Number(formData.base_salary),
                 standard_working_days: Number(formData.standard_working_days),
                 standard_working_hours: Number(formData.standard_working_hours),
                 overtime_eligible: formData.overtime_eligible,
@@ -177,7 +175,8 @@ export default function EditPayrollProfilePage() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit}>
+                <p className="mb-4"><a className="underline" href={`/admin/payroll/profiles/${profileId}/revisions`}>View salary history or revise base amount and basis</a></p>
+                    <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Profile Details</CardTitle>
@@ -201,7 +200,7 @@ export default function EditPayrollProfilePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="salary_type">Salary Type *</Label>
-                                    <Select
+                                    <Select disabled
                                         value={formData.salary_type}
                                         onValueChange={(v) =>
                                             setFormData({ ...formData, salary_type: v })
@@ -222,7 +221,7 @@ export default function EditPayrollProfilePage() {
                                 <div className="grid gap-2">
                                     <Label htmlFor="base_salary">Base Salary *</Label>
                                     <Input
-                                        id="base_salary"
+                                        disabled id="base_salary"
                                         type="number"
                                         step="0.01"
                                         placeholder="5000.00"

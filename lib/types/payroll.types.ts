@@ -15,6 +15,7 @@ export interface PayrollPeriod {
 }
 
 export interface EmployeePayroll {
+    currency?: string | null;
     id: number;
     payroll_period_id: number;
     employee_id: number;

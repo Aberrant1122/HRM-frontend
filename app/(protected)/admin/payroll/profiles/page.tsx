@@ -6,7 +6,6 @@ import {
     Search,
     Loader2,
     Edit,
-    Trash2,
     AlertTriangle,
     DollarSign,
 } from "lucide-react";
@@ -14,7 +13,6 @@ import { toast } from "sonner";
 import {
     getAllPayrollProfiles,
     getEmployeesWithoutProfiles,
-    deletePayrollProfile,
 } from "@/lib/actions/payroll.actions";
 import { PayrollProfile, EmployeeWithoutProfile } from "@/lib/types/payroll.types";
 import { Button } from "@/components/ui/button";
@@ -29,14 +27,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Header } from "@/components/header";
 import { PayrollStatsCard } from "@/components/payroll/PayrollStatsCard";
 import { EmptyPayrollState } from "@/components/payroll/EmptyPayrollState";
@@ -48,8 +38,6 @@ export default function PayrollProfilesPage() {
     const [missingProfiles, setMissingProfiles] = useState<EmployeeWithoutProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [profileToDelete, setProfileToDelete] = useState<PayrollProfile | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -76,25 +64,6 @@ export default function PayrollProfilesPage() {
         fetchData();
     }, []);
 
-    const handleDelete = async () => {
-        if (!profileToDelete) return;
-
-        try {
-            setIsDeleting(true);
-            const res = await deletePayrollProfile(profileToDelete.id);
-            if (res.success) {
-                toast.success("Payroll profile deleted successfully");
-                setProfileToDelete(null);
-                fetchData();
-            } else {
-                toast.error(res.message);
-            }
-        } catch (error) {
-            toast.error("Failed to delete profile");
-        } finally {
-            setIsDeleting(false);
-        }
-    };
 
     const filteredProfiles = profiles.filter(
         (p) =>
@@ -252,10 +221,10 @@ export default function PayrollProfilesPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium">
                                                     <div className="flex items-center justify-end gap-2 group">
-                                                        <span>Rs {Number(profile.base_salary).toLocaleString()}</span>
+                                                        <span>{profile.base_salary}</span>
                                                         <Link
-                                                            href={`/admin/payroll/profiles/${profile.id}/edit`}
-                                                            className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            href={`/admin/payroll/profiles/${profile.id}/revisions`}
+                                                            aria-label="Salary history and revision" className="text-muted-foreground underline"
                                                         >
                                                             <Edit className="h-3 w-3" />
                                                         </Link>
@@ -286,14 +255,7 @@ export default function PayrollProfilesPage() {
                                                                 <Edit className="h-4 w-4" />
                                                             </Link>
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => setProfileToDelete(profile)}
-                                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        <Link className="underline text-sm" href={`/admin/payroll/profiles/${profile.id}/revisions`}>Salary history</Link>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -306,42 +268,7 @@ export default function PayrollProfilesPage() {
                 </Card>
             </div>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={!!profileToDelete} onOpenChange={() => setProfileToDelete(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete Payroll Profile</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete the payroll profile for{" "}
-                            <strong>{profileToDelete?.employee?.fullName}</strong>? This action
-                            cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setProfileToDelete(null)}
-                            disabled={isDeleting}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            {isDeleting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deleting...
-                                </>
-                            ) : (
-                                "Delete Profile"
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
         </>
     );
 }

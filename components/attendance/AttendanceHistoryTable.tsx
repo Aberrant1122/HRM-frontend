@@ -138,7 +138,7 @@ export function AttendanceHistoryTable({
                   >
                     <td className="px-3 sm:px-4 py-3">
                       <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
-                        {new Date(record.date).toLocaleDateString("en-US", {
+                        {new Date(record.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC",
                           month: "short",
                           day: "numeric",
                         })}

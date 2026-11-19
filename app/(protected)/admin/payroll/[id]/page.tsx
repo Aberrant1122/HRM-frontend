@@ -1,4 +1,5 @@
 "use client";
+import {payrollCurrencyTotals} from '@/lib/payroll-currency-totals';
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -251,7 +252,7 @@ export default function PayrollPeriodDetailsPage() {
                             <>
                                 <Button variant="outline" className="flex-1 sm:flex-none" onClick={handleCalculateAll} disabled={isProcessing !== null}>
                                     {isProcessing === "all" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Calculator className="w-4 h-4 mr-2" />}
-                                    Calculate All
+                                    Verify Reviewed Inputs
                                 </Button>
                                 <Button className="flex-1 sm:flex-none" onClick={() => handleStatusTransition('review')} disabled={isProcessing !== null}>
                                     {isProcessing === "review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileCheck className="w-4 h-4 mr-2" />}
@@ -282,19 +283,19 @@ export default function PayrollPeriodDetailsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <PayrollStatsCard
                         title="Total Gross"
-                        value={`Rs ${(period.payrolls?.reduce((sum, p) => sum + (Number(p.gross_salary) || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={payrollCurrencyTotals(period.payrolls || [],'gross_salary')}
                         icon={DollarSign}
                         iconColor="text-blue-600"
                     />
                     <PayrollStatsCard
                         title="Total Deductions"
-                        value={`Rs ${(period.payrolls?.reduce((sum, p) => sum + (Number(p.total_deductions) || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={payrollCurrencyTotals(period.payrolls || [],'total_deductions')}
                         icon={TrendingDown}
                         iconColor="text-red-600"
                     />
                     <PayrollStatsCard
                         title="Net Disbursement"
-                        value={`Rs ${(period.payrolls?.reduce((sum, p) => sum + (Number(p.net_salary) || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        value={payrollCurrencyTotals(period.payrolls || [],'net_salary')}
                         icon={TrendingUp}
                         iconColor="text-green-600"
                     />
@@ -354,7 +355,7 @@ export default function PayrollPeriodDetailsPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    <span>Rs {Number(payroll.gross_salary).toFixed(2)}</span>
+                                                    <span>{payroll.currency || "Unclassified"} {Number(payroll.gross_salary).toFixed(2)}</span>
                                                     {Number(payroll.snapshot?.totalBonuses || 0) > 0 && (
                                                         <TooltipProvider>
                                                             <Tooltip>
@@ -365,7 +366,7 @@ export default function PayrollPeriodDetailsPage() {
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
                                                                     <div className="space-y-1">
-                                                                        <p className="font-bold">Bonuses: +Rs {Number(payroll.snapshot?.totalBonuses).toFixed(2)}</p>
+                                                                        <p className="font-bold">Bonuses: +{payroll.currency || "Unclassified"} {Number(payroll.snapshot?.totalBonuses).toFixed(2)}</p>
                                                                         {payroll.snapshot?.adjustments?.filter(a => a.type === 'bonus').map((a, i) => (
                                                                             <p key={i} className="text-[10px] opacity-80">- {a.reason}</p>
                                                                         ))}
@@ -378,7 +379,7 @@ export default function PayrollPeriodDetailsPage() {
                                             </TableCell>
                                             <TableCell className="text-right text-red-600">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    <span>-Rs {Number(payroll.total_deductions).toFixed(2)}</span>
+                                                    <span>-{payroll.currency || "Unclassified"} {Number(payroll.total_deductions).toFixed(2)}</span>
                                                     {Number(payroll.snapshot?.totalAdjustmentPenalties || 0) > 0 && (
                                                         <TooltipProvider>
                                                             <Tooltip>
@@ -389,7 +390,7 @@ export default function PayrollPeriodDetailsPage() {
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>
                                                                     <div className="space-y-1">
-                                                                        <p className="font-bold">Penalties: -Rs {Number(payroll.snapshot?.totalAdjustmentPenalties).toFixed(2)}</p>
+                                                                        <p className="font-bold">Penalties: -{payroll.currency || "Unclassified"} {Number(payroll.snapshot?.totalAdjustmentPenalties).toFixed(2)}</p>
                                                                         {payroll.snapshot?.adjustments?.filter(a => a.type === 'penalty').map((a, i) => (
                                                                             <p key={i} className="text-[10px] opacity-80">- {a.reason}</p>
                                                                         ))}
@@ -400,7 +401,7 @@ export default function PayrollPeriodDetailsPage() {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-green-600">Rs {Number(payroll.net_salary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                            <TableCell className="text-right font-bold text-green-600">{payroll.currency || "Unclassified"} {Number(payroll.net_salary).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                                             <TableCell className="text-center">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -409,11 +410,11 @@ export default function PayrollPeriodDetailsPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className="w-56">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel><DropdownMenuItem onClick={() => router.push("/admin/payroll/components/" + payroll.id)}>Component records</DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         {!payroll.locked && (
                                                             <DropdownMenuItem onClick={() => handleCalculate(payroll.id)}>
-                                                                <Calculator className="w-4 h-4 mr-2" /> Recalculate
+                                                                <Calculator className="w-4 h-4 mr-2" /> Verify reviewed inputs
                                                             </DropdownMenuItem>
                                                         )}
                                                         <DropdownMenuItem onClick={() => {

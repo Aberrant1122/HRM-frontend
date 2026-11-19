@@ -48,6 +48,8 @@ export interface AllAttendanceResponse {
     clockIn: string | null;
     clockOut: string | null;
     status: string;
+    recordState?: string;
+    records?: Array<{ id: number; status: string }>;
   }>;
 }
 

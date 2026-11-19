@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Header } from "@/components/header";
 import Link from "next/link";
 import {
@@ -36,11 +36,20 @@ export default function AttendanceReportsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [exportMonth, setExportMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [exporting, setExporting] = useState(false);
+  const exportScope = useRef({ token, exportMonth });
+  exportScope.current = { token, exportMonth };
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const requestSequence = useRef(0);
+  const scope = useRef({ token, selectedDate });
+  scope.current = { token, selectedDate };
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const fetchAttendance = useCallback(async () => {
     if (!token) {
       setError("No authentication token available");
@@ -48,9 +57,13 @@ export default function AttendanceReportsPage() {
       return;
     }
 
+    const sequence = ++requestSequence.current;
+    const current = () => mounted.current && sequence === requestSequence.current && scope.current.token === token && scope.current.selectedDate === selectedDate;
     try {
+      setData(null);
       setIsLoading(true);
       const result = await getAllAttendance(token, selectedDate);
+      if (!current()) return;
       if (result.error) {
         setError(result.error);
       } else {
@@ -58,10 +71,9 @@ export default function AttendanceReportsPage() {
         setError(null);
       }
     } catch (err) {
-      setError("Failed to fetch attendance data");
+      if (current()) setError("Failed to fetch attendance data");
     } finally {
-      setIsLoading(false);
-      setLastRefresh(new Date());
+      if (current()) { setIsLoading(false); setLastRefresh(new Date()); }
     }
   }, [token, selectedDate]);
 
@@ -103,7 +115,7 @@ export default function AttendanceReportsPage() {
   // Calculate statistics
   const totalEmployees = data?.data?.length || 0;
   const presentEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'present').length || 0;
-  const lateEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'late').length || 0;
+  const lateEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'conflict').length || 0;
   const absentEmployees = data?.data?.filter(emp => emp.status?.toLowerCase() === 'absent').length || 0;
   const attendanceRate = totalEmployees > 0 ? Math.round((presentEmployees / totalEmployees) * 100) : 0;
 
@@ -132,9 +144,19 @@ export default function AttendanceReportsPage() {
     }
   };
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log("Exporting attendance data...");
+  const handleExport = async (format:'csv'|'xlsx') => {
+    if (!token || exporting) return;
+    setExporting(true);
+    const current = () => mounted.current && exportScope.current.token === token && exportScope.current.exportMonth === exportMonth;
+    try {
+      const base = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5005/api/').replace(/\/$/, '');
+      const response = await fetch(base + '/attendance/export?month=' + encodeURIComponent(exportMonth)+'&format='+format, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+      if (!response.ok) throw Error((await response.json()).message || 'Export unavailable');
+      const blob = await response.blob(); if (!current()) return;
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = `attendance-records-${exportMonth}.${format}`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { if (current()) setError(error instanceof Error ? error.message : 'Export unavailable'); }
+    finally { if (mounted.current) setExporting(false); }
   };
 
   const handleRefresh = () => {
@@ -154,52 +176,52 @@ export default function AttendanceReportsPage() {
         {/* Page Header */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-gray-900">Daily Attendance</h1>
-          <p className="text-gray-600">Monitor employee attendance and generate comprehensive reports</p>
+          <p className="text-gray-600">Review recorded attendance, missing records and conflicts.</p><Link className="underline" href="/admin/attendance/coverage">Complete raw attendance coverage</Link><Link className="ml-4 underline" href="/admin/attendance/schedules">Shift and work-calendar definitions</Link><Link className="ml-4 underline" href="/admin/attendance/schedule-assignments">Dated schedule assignments</Link><Link className="ml-4 underline" href="/admin/attendance/monthly">Monthly schedules and recorded attendance</Link><Link className="ml-4 underline" href="/admin/attendance/calculations">Reviewed attendance calculations</Link>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">Total Employees</CardTitle>
+              <CardTitle className="text-sm font-medium text-blue-700">Employee Accounts</CardTitle>
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900">{totalEmployees}</div>
-              <p className="text-xs text-blue-600">Active workforce</p>
+              <div className="text-2xl font-bold text-blue-900">{data?totalEmployees:'—'}</div>
+              <p className="text-xs text-blue-600">Includes preserved HR membership</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Present Today</CardTitle>
+              <CardTitle className="text-sm font-medium text-green-700">Recorded Present</CardTitle>
               <Clock className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-900">{presentEmployees}</div>
-              <p className="text-xs text-green-600">{attendanceRate}% attendance rate</p>
+              <div className="text-2xl font-bold text-green-900">{data?presentEmployees:'—'}</div>
+              <p className="text-xs text-green-600">{data?`${attendanceRate}% of listed accounts`:'Records unavailable'}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-yellow-700">Late Arrivals</CardTitle>
+              <CardTitle className="text-sm font-medium text-yellow-700">Conflicting Records</CardTitle>
               <TrendingUp className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-900">{lateEmployees}</div>
+              <div className="text-2xl font-bold text-yellow-900">{data?lateEmployees:'—'}</div>
               <p className="text-xs text-yellow-600">Need attention</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-red-700">Absent</CardTitle>
+              <CardTitle className="text-sm font-medium text-red-700">Recorded Absent</CardTitle>
               <Calendar className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-900">{absentEmployees}</div>
-              <p className="text-xs text-red-600">Follow up required</p>
+              <div className="text-2xl font-bold text-red-900">{data?absentEmployees:'—'}</div>
+              <p className="text-xs text-red-600">Explicitly recorded as absent</p>
             </CardContent>
           </Card>
         </div>
@@ -234,7 +256,12 @@ export default function AttendanceReportsPage() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
+                  <SelectItem value="conflict">Conflicting records</SelectItem>
+                  <SelectItem value="missing">No record</SelectItem>
+                  <SelectItem value="leave">Recorded leave</SelectItem>
+                  <SelectItem value="on-leave">Recorded on-leave</SelectItem>
+                  <SelectItem value="half-day">Recorded half-day</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
                   <SelectItem value="absent">Absent</SelectItem>
                   <SelectItem value="early_leave">Early Leave</SelectItem>
                 </SelectContent>
@@ -255,9 +282,11 @@ export default function AttendanceReportsPage() {
                 Refresh
               </Button>
 
-              <Button onClick={handleExport} variant="outline" className="w-full sm:w-auto">
+              <Input type="month" aria-label="Export month" value={exportMonth} onChange={e => setExportMonth(e.target.value)} />
+              <Button onClick={()=>void handleExport('xlsx')} disabled={exporting || !exportMonth} variant="outline" className="w-full sm:w-auto">Export monthly raw records (Excel)</Button>
+              <Button onClick={()=>void handleExport('csv')} disabled={exporting || !exportMonth} variant="outline" className="w-full sm:w-auto">
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                Export monthly raw records (CSV)
               </Button>
             </div>
           </CardContent>
@@ -323,13 +352,13 @@ export default function AttendanceReportsPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {new Date(rec.date).toLocaleDateString("en-US", {
+                              {new Date(rec.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC",
                                 month: "short",
                                 day: "numeric",
                               })}
                             </span>
                             <span className="text-sm text-gray-500">
-                              {new Date(rec.date).toLocaleDateString("en-US", {
+                              {new Date(rec.date + "T12:00:00Z").toLocaleDateString("en-US", { timeZone: "UTC",
                                 weekday: "short",
                               })}
                             </span>
@@ -345,7 +374,7 @@ export default function AttendanceReportsPage() {
                             {formatTime(rec.clockOut)}
                           </span>
                         </TableCell>
-                        <TableCell>{statusBadge(rec.status)}</TableCell>
+                        <TableCell>{statusBadge(rec.status)}{rec.status === "conflict" && <p>{rec.records?.map(r => r.status).join(", ")}</p>}</TableCell>
                         <TableCell>
                           <Link href={`/admin/daily-work-records?employeeId=${rec.userId}&date=${rec.date}`}>
                             <Button variant="ghost" size="sm" className="h-8 px-3">

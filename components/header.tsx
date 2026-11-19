@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import {PolicyChangeAlert} from '@/components/policy-change-alert';
+import { CorrectionLink } from '@/components/attendance/CorrectionLink';
+import {AttendanceClockAlerts} from '@/components/attendance-clock-alerts';
 
 interface PageHeaderProps {
   breadcrumbs: Array<{
@@ -59,6 +62,9 @@ export function Header({ breadcrumbs }: PageHeaderProps) {
         </Breadcrumb>
       </div>
       <div className="flex items-center gap-4">
+        {user?.id&&["admin","manager","employee"].includes(user.role)&&<PolicyChangeAlert key={user.id}/>}<CorrectionLink /><AttendanceClockAlerts/>
+        {user?.id&&["admin","manager","employee","hr"].includes(user.role)&&<a href="/probation-feedback" className="text-sm underline">My probation feedback</a>}{user?.role === 'admin' && <a href="/admin/probation" className="text-sm underline">Probation</a>}
+        {user?.role === 'admin' && <a href="/admin/organization" className="text-sm underline">Organization</a>}
         {user && (
           <span className="hidden md:inline text-sm text-muted-foreground">
             {user.email}

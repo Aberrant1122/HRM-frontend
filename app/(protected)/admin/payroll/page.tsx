@@ -140,7 +140,7 @@ export default function PayrollDashboardPage() {
             <div className="flex flex-1 flex-col gap-6 p-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Payroll Dashboard</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Payroll Dashboard</h1><Link href="/admin/attendance/calculations" className="underline">Reviewed attendance calculations</Link><Link href="/admin/payroll/settlement-handoffs" className="underline">My settlement handoffs</Link><Link href="/admin/payroll/advances" className="underline">Salary advances and loans</Link>
                         <p className="text-muted-foreground">Manage payroll periods and employee disbursements.</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -161,7 +161,7 @@ export default function PayrollDashboardPage() {
                                     <DialogHeader>
                                         <DialogTitle>Generate New Payroll Period</DialogTitle>
                                         <DialogDescription>
-                                            Create a new payroll period and generate payment records for all active employees.
+                                            Create an empty draft payroll period. Add eligible accounts through Reviewed attendance calculations with an explicit baseline.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="grid gap-4 py-4">

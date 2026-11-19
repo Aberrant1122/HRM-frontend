@@ -1,3 +1,4 @@
+import type { EmployeeAccountSummary } from "@/lib/types/employee.types";
 import { getAuthToken } from "@/lib/auth/token";
 import {
   EmployeesResponse,
@@ -18,18 +19,22 @@ const getApiUrl = (endpoint: string) => {
   return `${baseUrl}${endpoint}`;
 };
 
-export const getAllEmployees = async (page: number = 1, limit: number = 10): Promise<EmployeesResponse> => {
+export const getAllEmployees = async (page: number = 1, limit: number = 10, filters: { search?: string; status?: string } = {}): Promise<EmployeesResponse> => {
   const token = getAuthToken();
   if (!token) {
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(getApiUrl(`employee/all?page=${page}&limit=${limit}`), {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filters.search) params.set('search', filters.search);
+  if (filters.status) params.set('status', filters.status);
+  const response = await fetch(getApiUrl(`employee/all?${params}`), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -140,7 +145,6 @@ export const getEmployeeBankDetails = async (employeeId: number) => {
 
     return null;
   } catch (error) {
-    console.error("Error fetching bank details:", error);
     throw error;
   }
 };
@@ -229,7 +233,6 @@ export const EmployeeBankInfo = async (
     const responseData = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      console.error("Bank info validation error:", responseData);
       throw new Error(
         responseData.message || "Failed to save bank information"
       );
@@ -237,7 +240,6 @@ export const EmployeeBankInfo = async (
 
     return responseData;
   } catch (error: unknown) {
-    console.error("Error in EmployeeBankInfo:", error);
     const errorMessage =
       error instanceof Error
         ? error.message
@@ -494,12 +496,6 @@ export const updateEmployee = async (
     }
   });
 
-  console.log('=== UPDATE EMPLOYEE ===');
-  console.log('Employee ID:', employeeId);
-  console.log('Original Update Data:', updateData);
-  console.log('Cleaned Update Data:', cleanedData);
-  console.log('Cleaned Data Keys:', Object.keys(cleanedData));
-  console.log('Cleaned Data JSON:', JSON.stringify(cleanedData, null, 2));
 
   const response = await fetch(getApiUrl(`employee/${employeeId}/profile`), {
     method: "PUT",
@@ -510,8 +506,6 @@ export const updateEmployee = async (
     body: JSON.stringify(cleanedData),
   });
 
-  console.log('Response Status:', response.status);
-  console.log('Response OK:', response.ok);
 
   if (!response.ok) {
     let errorData: { message?: string; errors?: { field: string; message: string }[] } = {};
@@ -522,17 +516,12 @@ export const updateEmployee = async (
         errorData = await response.json();
       } else {
         const text = await response.text();
-        console.error('Response Text:', text);
         errorData = { message: text || 'Unknown error' };
       }
     } catch (e) {
-      console.error('Error parsing response:', e);
       errorData = { message: 'Failed to parse error response' };
     }
 
-    console.error('=== UPDATE FAILED ===');
-    console.error('Status:', response.status);
-    console.error('Error Data:', errorData);
 
     // Show detailed validation errors if available
     if (errorData.errors && Array.isArray(errorData.errors)) {
@@ -636,4 +625,16 @@ export const updateEmployeeRole = async (
   }
 
   return response.json();
+};
+
+export const getEmployeeAccountSummary = async (): Promise<EmployeeAccountSummary> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("No authentication token found");
+  const response = await fetch(getApiUrl("employee/account-summary"), {
+    headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Account summary unavailable");
+  const result = await response.json();
+  if (!result.success || !result.data) throw new Error("Account summary unavailable");
+  return result.data;
 };

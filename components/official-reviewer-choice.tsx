@@ -1,0 +1,11 @@
+"use client";
+import {useEffect,useRef,useState} from 'react';
+import {managersGet,type Snapshot} from '@/lib/official-managers-api';
+import {getAuthToken} from '@/lib/auth/token';
+export function OfficialReviewerChoice({employeeId,value,selected,label,onChange}:{employeeId:string;value:string;selected:string;label:string;onChange:(id:string,version?:number)=>void}){
+ const [data,setData]=useState<Snapshot|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),seq=useRef(0),alive=useRef(true);
+ async function load(){const n=++seq.current,token=getAuthToken();setData(null);setError('');setBusy(true);try{if(!token)throw Error('Sign in to continue');const d=await managersGet<Snapshot>(token,'employee/'+employeeId+'/official-managers');if(alive.current&&n===seq.current&&token===getAuthToken())setData(d);}catch(e){if(alive.current&&n===seq.current&&token===getAuthToken())setError(e instanceof Error?e.message:'Official managers unavailable');}finally{if(alive.current&&n===seq.current&&token===getAuthToken())setBusy(false);}}
+ useEffect(()=>{alive.current=true;void load();return()=>{alive.current=false;seq.current++;};},[employeeId]); // eslint-disable-line react-hooks/exhaustive-deps
+ const options=data?.people.filter(p=>data.assignment?.managerIds.includes(p.id)&&p.status==='active'&&['admin','manager','employee','hr'].includes(p.role))||[];
+ return <section className="space-y-2"><label>{label}<select aria-label={label} className="border block" value={value} disabled={busy||!data} onChange={e=>onChange(e.target.value,e.target.value?data?.assignment?.version:undefined)}><option value="">Unassigned</option>{value&&!options.some(p=>String(p.id)===value)&&<option value={value}>{selected||'Retained reviewer reference'} (retained reference)</option>}{options.map(p=><option key={p.id} value={p.id}>{p.fullName} · {p.email}</option>)}</select></label><p>{data?.assignment?'Official reporting set version '+data.assignment.version:'Official reporting set unconfigured'}. New assignments use eligible active official managers; existing reviewer access rules apply. Reporting changes do not automatically reassign evaluations.</p><button className="underline" type="button" disabled={busy} onClick={load}>Reload official manager choices</button>{error&&<p role="alert">{error}</p>}</section>;
+}

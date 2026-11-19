@@ -1,5 +1,6 @@
 "use client";
 
+import { openAttendanceDeliverable } from '@/lib/attendance-deliverable';
 import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/header";
 import {
@@ -435,7 +436,8 @@ export default function AdminDailyWorkRecordsPage() {
                               {record.deliverables.map((file, idx) => (
                                 <a
                                   key={idx}
-                                  href={file.url}
+                                  href={file.url.startsWith("/attendance/deliverables/") ? "#" : file.url}
+                                  onClick={file.url.startsWith("/attendance/deliverables/") ? e => { e.preventDefault(); void openAttendanceDeliverable(file.url).catch(() => alert("Deliverable unavailable")); } : undefined}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:underline flex items-center gap-1 text-sm"
@@ -609,7 +611,8 @@ export default function AdminDailyWorkRecordsPage() {
                           {selectedRecord.deliverables.map((file, idx) => (
                             <a
                               key={idx}
-                              href={file.url}
+                              href={file.url.startsWith("/attendance/deliverables/") ? "#" : file.url}
+                                  onClick={file.url.startsWith("/attendance/deliverables/") ? e => { e.preventDefault(); void openAttendanceDeliverable(file.url).catch(() => alert("Deliverable unavailable")); } : undefined}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2 p-2 border rounded-md hover:bg-muted/50 transition-colors text-sm"
